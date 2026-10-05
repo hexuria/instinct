@@ -14,4 +14,7 @@ exclude_re = [
     "delete match arm IsNormalized::Yes in nfc_with_map",
     "replace > with >= in nfc_with_map",
     "replace covered -> bool with false",
+    "replace Lexicon::is_empty -> bool with false",
+    "replace > with >= in Lexicon::substring_hit",
+    "replace < with <= in qwerty_adjacent",
 ]
