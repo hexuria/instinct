@@ -1,0 +1,13 @@
+# Spec §3.2: CODEOWNERS per packs/<name>/ so pack owners review data changes.
+# @hexuria is the only collaborator today; replace a pack's line with its domain owner when one
+# exists (an owner listed here must have write access, or GitHub ignores the line).
+*                               @hexuria
+/crates/                        @hexuria
+/packs/pua-pack-autosteer/      @hexuria
+/packs/pua-pack-gateway-shape/  @hexuria
+/packs/pua-pack-bir-fields/     @hexuria
+/packs/pua-pack-ocr-labels/     @hexuria
+/packs/pua-pack-tool-selection/ @hexuria
+/.github/                       @hexuria
+/deny.toml                      @hexuria
+/scripts/                       @hexuria
