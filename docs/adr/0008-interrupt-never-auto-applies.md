@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-10-05
-- Task: T10 (`pua-pack-autosteer`)
+- Task: T10 (`pua-steer`)
 
 ## Context
 

@@ -11,10 +11,10 @@ use std::hint::black_box;
 
 use gungraun::{library_benchmark, library_benchmark_group, main};
 use pua_core::{Millis, Profile};
+use pua_gateway::shape_of;
 use pua_graph::{Edge, LabeledGraph, Rounds, wl_refine};
 use pua_hdc::{Codebook, D1024, Encoder, IterationCap, resonate};
-use pua_pack_autosteer::{Autosteer, Input};
-use pua_pack_gateway_shape::shape_of;
+use pua_steer::{Autosteer, Input};
 use pua_text::{NormalizeConfig, normalize};
 
 fn prose_32kib() -> String {

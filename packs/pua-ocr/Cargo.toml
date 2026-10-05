@@ -1,6 +1,6 @@
 [package]
-name = "pua-benches"
-description = "PUA Callgrind instruction-count benches (gungraun) for the §5.3 paths."
+name = "pua-ocr"
+description = "PUA (Predictable Universal Advisor): OCR labels pack — COR label extraction via original-text spans."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,17 +11,13 @@ publish.workspace = true
 [dependencies]
 pua-core = { workspace = true, features = ["serde"] }
 pua-text.workspace = true
-pua-hdc.workspace = true
 pua-graph.workspace = true
-pua-steer.workspace = true
-pua-gateway.workspace = true
+serde.workspace = true
+blake3.workspace = true
 
 [dev-dependencies]
-gungraun.workspace = true
-
-[[bench]]
-name = "paths"
-harness = false
+proptest.workspace = true
+unicode-normalization.workspace = true
 
 [lints]
 workspace = true

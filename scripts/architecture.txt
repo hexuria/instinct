@@ -8,7 +8,7 @@
 #   1. every workspace member has an entry (new crates must declare their direction);
 #   2. a crate's normal and build dependencies on workspace crates are a subset of "allowed";
 #   3. no banned crate appears anywhere in its resolved dependency closure (incl. dev-deps).
-# `pua-pack-*` is a pattern entry that applies to every pack crate.
+# Domain packs under packs/ (steer, gateway, bir, ocr, toolbox).
 
 pua-core:
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
@@ -26,9 +26,17 @@ pua-explain: pua-core
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
 pua-jev: pua-core
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
-pua-pack-*: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
+pua-steer: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-gateway: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-bir: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-ocr: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-toolbox: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
 
 # Bench harness (Callgrind Ir gate). May depend on every library crate; still bans network/async.
-pua-benches: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain pua-jev pua-pack-autosteer pua-pack-gateway-shape pua-pack-bir-fields pua-pack-ocr-labels pua-pack-tool-selection
+pua-benches: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain pua-jev pua-steer pua-gateway pua-bir pua-ocr pua-toolbox
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*

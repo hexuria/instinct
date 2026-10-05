@@ -20,12 +20,12 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | 7 | [#8](https://github.com/hexuria/pua/pull/8) | `hdc` | `main` | T7 pua-hdc, docs/hdc-capacity.md | merged (7316e2e) |
 | 8 | [#9](https://github.com/hexuria/pua/pull/9) | `graph` | `main` | T8 pua-graph (1-WL, spd-wl), fuzz `graph_from_bytes` | merged (2e9a0f4) |
 | 9 | [#10](https://github.com/hexuria/pua/pull/10) | `jev` | `main` | T9 pua-jev, ADR 0009, fuzz `jev_reply_parse` | merged (3c6fd68) |
-| 10 | [#11](https://github.com/hexuria/pua/pull/11) | `autosteer` | `main` | T10 pua-pack-autosteer, ADR 0008, eval+goldens | merged (761365c) |
+| 10 | [#11](https://github.com/hexuria/pua/pull/11) | `autosteer` | `main` | T10 pua-steer, ADR 0008, eval+goldens | merged (761365c) |
 | 11 | [#12](https://github.com/hexuria/pua/pull/12) | `fix-autosteer-mutants` | `main` | T10 mutants survivors | merged (5e4732d) |
-| 12 | [#13](https://github.com/hexuria/pua/pull/13) | `gateway` | `main` | T11 pua-pack-gateway-shape | merged (ecbe60a) |
-| 13 | [#14](https://github.com/hexuria/pua/pull/14) | `bir` | `main` | T12 pua-pack-bir-fields | merged (3316f11) |
-| 14 | [#15](https://github.com/hexuria/pua/pull/15) | `ocr-labels` | `main` | T13 pua-pack-ocr-labels | merged (87ec58f) |
-| 15 | [#16](https://github.com/hexuria/pua/pull/16) | `tool-selection` | `main` | T14 pua-pack-tool-selection | merged (a097137) |
+| 12 | [#13](https://github.com/hexuria/pua/pull/13) | `gateway` | `main` | T11 pua-gateway | merged (ecbe60a) |
+| 13 | [#14](https://github.com/hexuria/pua/pull/14) | `bir` | `main` | T12 pua-bir | merged (3316f11) |
+| 14 | [#15](https://github.com/hexuria/pua/pull/15) | `ocr-labels` | `main` | T13 pua-ocr | merged (87ec58f) |
+| 15 | [#16](https://github.com/hexuria/pua/pull/16) | `tool-selection` | `main` | T14 pua-toolbox | merged (a097137) |
 | 16 | [#17](https://github.com/hexuria/pua/pull/17) | `benches` | `main` | T15–T17 benches, fuzz docs, review-report | merged (727ab99) |
 
 
@@ -76,17 +76,17 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
   4 equivalent excluded); pua-lexicon `repair_hit` guards rewritten so they have no
   equivalent mutants. Stack rebased on the fixes.
 
-- T10: pua-pack-autosteer (Choice delivery=[queue,steer,interrupt]; data/*.toml; text→lexicon→rules→decide;
+- T10: pua-steer (Choice delivery=[queue,steer,interrupt]; data/*.toml; text→lexicon→rules→decide;
   AutoApply::Never on interrupt; confusable control words → Abstain; 221 labelled messages;
   interrupt FP=0 at standard; keyword-baseline comparison in docs/eval/autosteer.md; golden
   journal + replay CLI; generator-sequence proptests). ADR 0008.
 
-- T10: pua-pack-autosteer merged (#11); mutants survivors killed (#12).
+- T10: pua-steer merged (#11); mutants survivors killed (#12).
 
-- T11: pua-pack-gateway-shape — integer `ShapeFeatures` only (no tier); §6.2 proptests.
-- T12: pua-pack-bir-fields — TIN suggestions never emit "valid"; Ñ-names; sample catalog; WL layout.
-- T13: pua-pack-ocr-labels — COR extraction via original spans; three A §5.3 cases; NFC/NFD free move.
-- T14: pua-pack-tool-selection — Choice/Abstain over tools; call-DAG WL; permutation/case/space props.
+- T11: pua-gateway — integer `ShapeFeatures` only (no tier); §6.2 proptests.
+- T12: pua-bir — TIN suggestions never emit "valid"; Ñ-names; sample catalog; WL layout.
+- T13: pua-ocr — COR extraction via original spans; three A §5.3 cases; NFC/NFD free move.
+- T14: pua-toolbox — Choice/Abstain over tools; call-DAG WL; permutation/case/space props.
 
 
 - T11–T14 packs merged (#13–#16).
@@ -96,7 +96,8 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 
 ## Next
 
-- T0–T17 complete on `main` at 727ab99. Follow-ups: consumer adoption, Phase B target-selection.
+- T0–T17 complete on `main`. Pack crates renamed to `pua-steer` / `pua-gateway` / `pua-bir` / `pua-ocr` / `pua-toolbox` (this PR).
+- Follow-ups: consumer adoption, Phase B target-selection.
 
 
 ## Known constraints
