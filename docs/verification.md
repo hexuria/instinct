@@ -38,6 +38,7 @@ either killed by a new test or listed below as equivalent, with the reason.
 | pua-lexicon (local run, T5) | `EntryId::get`, `Lexicon::config`, `ConfusableFlag::token`, protected token in a multi-token match, repair length bound, substring tie-breaks | `src/tests.rs::mutants_survivors_pinned`, `substring_tie_breaks` |
 | pua-rules (local run, T6) | `RuleSet::config`; negator overlapping the cue (`b + len <= start`); `?` offset check (`from + k`) | `src/tests.rs::mutants_survivors_pinned` |
 | pua-hdc (local run, T7) | 19 in `Codebook::decode` (subtraction estimate, tie order, inclusive floor), `best_two` runner-up, `Encoder::version`, resonator fixed-point `&&` | `src/tests.rs::decode_subtracts_the_estimated_contribution`, `decode_ties_and_inclusive_floor`, `nearest_margin_is_top_minus_runner_up`, `resonator_iteration_counts_are_pinned`, `decode_estimate_is_exact_for_integer_weights` (both rounding branches; the earlier tests left residuals that score ±1000 by identity), `resonator_needs_both_estimates_unchanged` (single-entry `A`) |
+| pua-graph (local run, T8) | `refine_with` fixed-round counter `+=` → `*=` | `src/tests.rs::rounds_and_stability` (`Fixed(7).rounds() == 7`) |
 | pua-core (CI mutants-diff on #3) | `is_canonical` `>` → `>=`; `Span::contains` `&&` → `\|\|`; `Span::overlaps` `<` → `<=`; `Trail::is_empty` → `true` | same test (Ranked tie order, span relations); `trail::tests` |
 
 Text mutants run (T4, local, after the tests above): 216 mutants, 0 missed (15 timeouts are
@@ -52,3 +53,8 @@ after CI mutants-diff on #6 flagged them; the other three are excluded in `.carg
 
 Rules mutants run (T6, local, after the survivor tests): 137 mutants, 116 caught, 21 unviable,
 0 missed.
+
+HDC mutants run (T7, local, after the tests above): 220 mutants, 198 caught, 22 unviable, 0 missed.
+
+Graph mutants run (T8, local, `--all-features`): 51 mutants, 43 caught, 7 unviable, 1 timeout
+(`bfs` `==` → `!=` never terminates), 0 missed.
