@@ -38,16 +38,16 @@ fn mutants_survivors_pinned() {
     assert_ne!(fa, fb);
 
     let c = Catalog::load().unwrap();
-    assert_eq!(
-        CatalogError::Invalid("x".into()).to_string(),
-        "catalog: x"
-    );
+    assert_eq!(CatalogError::Invalid("x".into()).to_string(), "catalog: x");
     let hit = c.get("2303").expect("get");
     assert_eq!(hit.code(), "2303");
     assert_eq!(hit.label(), "COR");
     assert!(c.get("nope").is_none());
     // get compares exact code (==); a flipped != would match the first non-equal entry.
-    assert_ne!(c.get("2303").map(|h| h.code().to_owned()), c.get("039").map(|h| h.code().to_owned()));
+    assert_ne!(
+        c.get("2303").map(|h| h.code().to_owned()),
+        c.get("039").map(|h| h.code().to_owned())
+    );
 
     let fp = c.fingerprint();
     assert_eq!(fp.len(), 32);
