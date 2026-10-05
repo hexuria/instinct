@@ -462,3 +462,87 @@ Questions for Uriah:
 3. **`pua-lexicon::ocr`**: move with BIR (default), or generalize into a data-driven confusion table now?
 4. **HDC wiring**: keep `pua-hdc` as an unwired, documented capability until a consumer brings a codebook (recommended), or wire an optional codebook stage into `RuleClassifier` now?
 5. **Custom thresholds**: presets only (recommended for now), or a validated `Thresholds` input?
+
+## 11. Phase 2 follow-up (2026-10-05)
+
+Uriah approved Phase 2 on 2026-10-05 with the defaults from §10: packs go to their consumers,
+`pua-jev` goes to opengrok-server, HDC stays unwired, and only the three profile presets remain.
+Every handoff target accepted a PR, so nothing was parked on an `archive/packs-*` branch.
+
+### What was done
+
+| Step | PR | Result |
+|---|---|---|
+| §10 step 3 + 5 | [#21](https://github.com/hexuria/pua/pull/21) (merged `6aef318`) | `pua-rules::RuleClassifier` (`ClassifierSpec`, `OnConfusable`) is the shared pipeline. The `delivery` fixture and its golden journal in `crates/pua-rules/tests/fixtures/delivery/` replay byte-identical to the old `pua-steer` journal. |
+| §10 steps 1, 2, 4 + B6 | [#22](https://github.com/hexuria/pua/pull/22) (merged `e1635f1`) | `pua-core`: `CandidateSet`, one private gate in `decide`, `abstain()` so every abstain carries all options ranked, neutral confusable text. Removed `rank_candidates`, `RankedCandidates`, `CandidatePick`, `HdcMode`, `Thresholds::hdc` and the `Pack` trait. Added `pua-lexicon::overlap` and `pua-graph::label_of`. Toolbox fix: `chosen_id` is `None` on abstain. `DataVersion` changed on every golden row, because the profile table lost its HDC column. |
+| B8 handoffs | nativechat#194, open-ai-gateway#149, buwiz-forms#67, opengrok-server#370 (drafts) | Consumer-owned crates depend on PUA by git rev `e1635f1`. See the migration table below. |
+| B1–B5, B7 + §10 step 6 | B PR (`refactor/remove-packs`) | Removed `packs/` (all five) and `crates/pua-jev`. Removed `pua_lexicon::ocr`, the `jev_reply_parse` fuzz target, `docs/eval/autosteer.md` and the autosteer goldens. Cleaned the workspace members, CODEOWNERS, `scripts/architecture.txt`, `scripts/mutants.sh` and repo rules. The `autosteer_ask` bench became `classifier_decide`, and `gateway_shape_mixed` was dropped. Engine docs now use consumer-neutral wording. README and spec were rewritten around "PUA owns *how*". Added ADR 0010. |
+
+### Crates
+
+- **Retained (engine):** `pua-core`, `pua-text`, `pua-lexicon`, `pua-rules`, `pua-hdc` (with
+  `resonator`), `pua-graph`, `pua-explain`, plus `benches/pua-benches` and `fuzz/`.
+- **Removed:** `pua-steer`, `pua-gateway`, `pua-bir`, `pua-ocr`, `pua-toolbox`, `pua-jev`.
+  `pua-toolbox` had no consumer. Its generic parts already live in the engine (`CandidateSet`,
+  `overlap`, `label_of`), so it was deleted rather than moved.
+
+### Consumer migrations
+
+| From | To | PR | Verified |
+|---|---|---|---|
+| `pua-steer` | hexuria/nativechat `crates/autosteer` (`nativechat-autosteer`; `PackError` → `AutosteerError`; `target-selection` dropped) | [#194](https://github.com/hexuria/nativechat/pull/194) | 16 unit, 2 eval/golden, 3 proptests and 1 doctest pass. The golden replays byte-identical and `EVAL.md` regenerates with the same body. clippy, fmt and `cargo deny` pass. |
+| `pua-gateway` | hexuria/open-ai-gateway `crates/oag-shape` (depends only on `pua-text`; tag `oag-shape/1`) | [#149](https://github.com/hexuria/open-ai-gateway/pull/149) | 6 unit, 3 proptests and 1 doctest pass. clippy, fmt and deny pass. |
+| `pua-bir` + `pua_lexicon::ocr` | hexuria/buwiz-forms `crates/bir-suggest` (`ocr_digits.rs`) | [#67](https://github.com/hexuria/buwiz-forms/pull/67) | The full test suite, clippy and fmt pass. Its CI runs `--workspace`, so it covers the new crates. |
+| `pua-ocr` | hexuria/buwiz-forms `crates/bir-cor-extract` | [#67](https://github.com/hexuria/buwiz-forms/pull/67) | Same as the row above. |
+| `pua-jev` | hexuria/opengrok-server `crates/opengrok-jev` | [#370](https://github.com/hexuria/opengrok-server/pull/370) | 15 unit, 7 proptests and 1 doctest pass. The wire shapes were re-checked against `routes.rs`. clippy, fmt, `check-architecture.sh` and `crate-size.sh` pass. |
+
+### Deviations from the plan
+
+- **Toolbox was not rewired onto a `RuleClassifier`.** In #22 it moved to `pua-text` tokens with
+  `overlap` and `CandidateSet`, keeping identical scores. In the B PR it was deleted (B4), because
+  no consumer needs it.
+- **`opengrok-jev` is a standalone workspace.** opengrok-server pins Rust 1.95 in its toolchain file
+  and in `ci.yml`, but PUA's `rust-version` is 1.99. The crate therefore carries its own `[workspace]`
+  and a 1.99.0 `rust-toolchain.toml`, and the root `Cargo.toml` excludes it.
+- **The fixture keeps domain tag `pua-steer/1`.** This lets the engine journal and NativeChat's
+  journal stay byte-identical at the same PUA rev. The tag is fixture data, not a crate name.
+- **Handoffs pin a git rev, not a tag.** No PUA tag has been cut yet.
+- **ADRs 0008 and 0009 stay in PUA** for history. Their status lines say "moved with the code", and
+  each consumer crate carries a copy of its rule.
+
+### Invariants after the split (§9)
+
+| Invariant | Engine enforcement now |
+|---|---|
+| Determinism | `pua-core/tests/props.rs::decide_is_deterministic`, `pua-rules/tests/classifier.rs::decide_is_deterministic`, golden replay `golden_journal_replays_byte_identically` |
+| Candidate order | `pua-core/tests/props.rs::candidate_permutation_is_invariant` (`CandidateSet`) |
+| Tie / low margin / low confidence → abstain | `abstain_iff_below_threshold_or_margin`, `ties_rank_the_lower_index_first`, `decide.rs` boundary tests |
+| No floats, clocks, env, unordered maps, network | `clippy.toml`, `float_arithmetic` deny (no exception left, now that `pua-jev` is gone), `deny.toml`, `scripts/architecture.txt` |
+| Declared invariances | `pua-text`, `pua-rules` and `pua-lexicon` proptests. Each pack's generator-sequence proptests moved with it. |
+
+Test count: 235 at the Phase 1 baseline and 250 after #22. After the B PR there are 165 in PUA,
+because the pack tests now run in the consumer repos.
+
+### Remaining debt
+
+1. **Workflows still mention packs.** The `bench.yml` and `mutants-diff.yml` path filters list
+   `packs/**`, `mutants-diff.yml` diffs `crates packs`, and the nightly unsafe grep scans `packs`. These references are harmless now, because the directory is gone. The
+   box token lacks `workflow` scope (ADR 0001), so the cleanup has to be pushed from the Mac.
+2. **No PUA tag yet.** Cut `v0.1.0` once the B PR is on `main`, then move the consumer pins from
+   `rev = "e1635f1"` to the tag. The engine API changed between the pinned rev and the B PR (`ocr`
+   is gone), but no consumer imports the removed module.
+3. **The handoff PRs are drafts awaiting the owners.** Each one adds a crate but does not yet wire
+   it into the app (NativeChat `OnSend::Auto`, the gateway request path, the buwiz COR flow, the
+   opengrok `JevDoor`).
+4. **NativeChat CI does not test the new crate.** CI tests only `-p nativechat`, and adding
+   `nativechat-autosteer` needs a workflow edit from the Mac. The lockfile also bumps
+   `serde_spanned` and `unicode-segmentation`.
+5. **opengrok-server toolchain.** Bumping it to 1.99 would let `opengrok-jev` join the root
+   workspace.
+6. **buwiz-forms overlap.** The existing `cor_ocr` already has its own longest-exact matching and a
+   `FormRecord`. Dedupe it with `bir-cor-extract` when the flow is wired.
+7. **HDC is unwired** (owner decision). `pua-hdc` and `resonator` stay as documented capabilities
+   until a consumer brings a codebook.
+8. **Bench baseline.** `classifier_decide` is a new bench name, so its first bench-gate run has no
+   baseline to compare against.
+9. **Custom thresholds** stay out of scope. There are three `Profile` presets only.
