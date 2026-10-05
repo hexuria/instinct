@@ -64,3 +64,16 @@ Graph mutants run (T8, local, `--all-features`): 51 mutants, 43 caught, 7 unviab
 Jev mutants run (T9, local): 46 mutants, 38 caught, 8 unviable, 0 missed.
 
 Autosteer mutants run (T10, local, after CI survivors): 0 missed.
+
+
+## Fuzz targets (T16)
+
+| Target | Crate under test | Seeds |
+|---|---|---|
+| `normalize` | pua-text | `fuzz/seeds/normalize/` |
+| `lexicon_lookup` | pua-lexicon | `fuzz/seeds/lexicon_lookup/` |
+| `rules_match` | pua-rules | `fuzz/seeds/rules_match/` |
+| `graph_from_bytes` | pua-graph | `fuzz/seeds/graph_from_bytes/` |
+| `jev_reply_parse` | pua-jev | `fuzz/seeds/jev_reply_parse/` |
+
+Nightly: `scripts/fuzz-smoke.sh` (dated `$NIGHTLY`). Crashes land in `fuzz/artifacts/<target>/`.
