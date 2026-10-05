@@ -23,10 +23,11 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | 10 | [#11](https://github.com/hexuria/pua/pull/11) | `autosteer` | `main` | T10 pua-pack-autosteer, ADR 0008, eval+goldens | merged (761365c) |
 | 11 | [#12](https://github.com/hexuria/pua/pull/12) | `fix-autosteer-mutants` | `main` | T10 mutants survivors | merged (5e4732d) |
 | 12 | [#13](https://github.com/hexuria/pua/pull/13) | `gateway` | `main` | T11 pua-pack-gateway-shape | merged (ecbe60a) |
-| 13 | [#14](https://github.com/hexuria/pua/pull/14) | `bir` | `main` | T12 pua-pack-bir-fields | open |
-| 14 | [#15](https://github.com/hexuria/pua/pull/15) | `ocr-labels` | `bir` | T13 pua-pack-ocr-labels | open |
-| 15 | [#16](https://github.com/hexuria/pua/pull/16) | `tool-selection` | `ocr-labels` | T14 pua-pack-tool-selection | open |
-| 16 | (pending) | `benches` | `tool-selection` | T15 pua-benches + docs/benchmarks.md | local |
+| 13 | [#14](https://github.com/hexuria/pua/pull/14) | `bir` | `main` | T12 pua-pack-bir-fields | merged (3316f11) |
+| 14 | [#15](https://github.com/hexuria/pua/pull/15) | `ocr-labels` | `main` | T13 pua-pack-ocr-labels | merged (87ec58f) |
+| 15 | [#16](https://github.com/hexuria/pua/pull/16) | `tool-selection` | `main` | T14 pua-pack-tool-selection | open |
+| 16 | (pending) | `benches` | `tool-selection` | T15–T17 benches, fuzz docs, review-report | local |
+
 
 ## Done
 
@@ -89,7 +90,7 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 
 ## Next
 
-- Merge #14–#16 bottom-up; open T15 PR; T16 fuzz confirm; T17 review-report.md.
+- Merge #14–#16; open benches PR (T15–T17 tip).
 
 ## Known constraints
 
