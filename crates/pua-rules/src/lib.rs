@@ -58,6 +58,7 @@
 //! ```
 #![forbid(unsafe_code)]
 
+mod classifier;
 mod spec;
 
 use core::fmt;
@@ -68,6 +69,7 @@ use pua_core::{Confidence, Millis, ScorerKind, Span, StageKind, TrailRecord};
 use pua_lexicon::{Lexicon, Lookup, MatchKind};
 use pua_text::{NormalizeConfig, Normalized, normalize};
 
+pub use crate::classifier::{ClassifierError, ClassifierSpec, OnConfusable, RuleClassifier};
 pub use crate::spec::{
     ClassSpec, DEFAULT_NEGATION_WINDOW, MAX_NEGATION_WINDOW, MAX_NEGATOR_TOKENS, MAX_PATTERN_ITEMS,
     RuleSetSpec, RuleSpec, RulesError,

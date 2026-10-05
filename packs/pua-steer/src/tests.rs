@@ -1,6 +1,11 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use super::*;
+use pua_core::{AbstainReason, Answer, Confidence, OptionIndex, Ranked};
+
+fn empty_ranked() -> Ranked {
+    Ranked::try_from(Vec::<(OptionIndex, Confidence)>::new()).unwrap()
+}
 
 fn pack() -> Autosteer {
     Autosteer::load().unwrap()

@@ -418,9 +418,11 @@ version = "0.0.0"
 dependencies = [
  "proptest",
  "pua-core",
+ "pua-explain",
  "pua-lexicon",
  "pua-text",
  "serde",
+ "serde_json",
  "toml",
  "unicode-normalization",
 ]
