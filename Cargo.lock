@@ -244,6 +244,16 @@ version = "0.0.0"
 [[package]]
 name = "pua-pack-gateway-shape"
 version = "0.0.0"
+dependencies = [
+ "proptest",
+ "pua-core",
+ "pua-text",
+ "serde",
+ "serde_json",
+ "unicode-normalization",
+ "unicode-script",
+ "unicode-security",
+]
 
 [[package]]
 name = "pua-pack-ocr-labels"
