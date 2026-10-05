@@ -20,7 +20,12 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | 7 | [#8](https://github.com/hexuria/pua/pull/8) | `hdc` | `main` | T7 pua-hdc, docs/hdc-capacity.md | merged (7316e2e) |
 | 8 | [#9](https://github.com/hexuria/pua/pull/9) | `graph` | `main` | T8 pua-graph (1-WL, spd-wl), fuzz `graph_from_bytes` | merged (2e9a0f4) |
 | 9 | [#10](https://github.com/hexuria/pua/pull/10) | `jev` | `main` | T9 pua-jev, ADR 0009, fuzz `jev_reply_parse` | merged (3c6fd68) |
-| 10 | [#11](https://github.com/hexuria/pua/pull/11) | `autosteer` | `main` | T10 pua-pack-autosteer, ADR 0008, eval+goldens | open |
+| 10 | [#11](https://github.com/hexuria/pua/pull/11) | `autosteer` | `main` | T10 pua-pack-autosteer, ADR 0008, eval+goldens | merged (761365c) |
+| 11 | [#12](https://github.com/hexuria/pua/pull/12) | `fix-autosteer-mutants` | `main` | T10 mutants survivors | merged (5e4732d) |
+| 12 | (pending) | `gateway` | `main` | T11 pua-pack-gateway-shape | open (local) |
+| 13 | (pending) | `bir` | `gateway` | T12 pua-pack-bir-fields | open (local) |
+| 14 | (pending) | `ocr-labels` | `bir` | T13 pua-pack-ocr-labels | open (local) |
+| 15 | (pending) | `tool-selection` | `ocr-labels` | T14 pua-pack-tool-selection | open (local) |
 
 ## Done
 
@@ -74,9 +79,16 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
   interrupt FP=0 at standard; keyword-baseline comparison in docs/eval/autosteer.md; golden
   journal + replay CLI; generator-sequence proptests). ADR 0008.
 
+- T10: pua-pack-autosteer merged (#11); mutants survivors killed (#12).
+
+- T11: pua-pack-gateway-shape — integer `ShapeFeatures` only (no tier); §6.2 proptests.
+- T12: pua-pack-bir-fields — TIN suggestions never emit "valid"; Ñ-names; sample catalog; WL layout.
+- T13: pua-pack-ocr-labels — COR extraction via original spans; three A §5.3 cases; NFC/NFD free move.
+- T14: pua-pack-tool-selection — Choice/Abstain over tools; call-DAG WL; permutation/case/space props.
+
 ## Next
 
-- T11 gateway-shape pack, then T12-T14 packs, T15 benches, T16 fuzz, T17 review report.
+- T15 benches (`pua-benches` + docs/benchmarks.md), T16 fuzz wiring confirmation, T17 review-report.md.
 
 ## Known constraints
 
