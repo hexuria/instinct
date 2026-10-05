@@ -181,6 +181,26 @@ mod tests {
     }
 
     #[test]
+    fn spans_before_after_and_touching_a_fence_survive() {
+        use ProtectedKind::*;
+        let fence = ("```x```", FencedCode);
+        assert_eq!(kinds("`y` ```x```"), vec![("`y`", InlineCode), fence]);
+        assert_eq!(kinds("```x``` `y`"), vec![fence, ("`y`", InlineCode)]);
+        assert_eq!(kinds("\"a\"```x```"), vec![("\"a\"", Quoted), fence]);
+        assert_eq!(kinds("```x```\"a\""), vec![fence, ("\"a\"", Quoted)]);
+        assert_eq!(kinds("```x``` \"a\""), vec![fence, ("\"a\"", Quoted)]);
+    }
+
+    #[test]
+    fn bare_relative_path_prefixes_are_paths() {
+        use ProtectedKind::*;
+        assert_eq!(kinds("cd ~/ now"), vec![("~/", Path)]);
+        assert_eq!(kinds("cd ./ now"), vec![("./", Path)]);
+        assert_eq!(kinds("cd ../ now"), vec![("../", Path)]);
+        assert_eq!(kinds("a / b"), vec![]);
+    }
+
+    #[test]
     fn detects_each_kind() {
         use ProtectedKind::*;
         assert_eq!(kinds("run `stop` now"), vec![("`stop`", InlineCode)]);

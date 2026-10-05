@@ -292,18 +292,24 @@ impl Builder {
     }
 }
 
+/// The input-size gate, separate so the inclusive bound is testable without a 16 MiB input.
+fn check_len(len: usize) -> Result<(), TextError> {
+    if len > MAX_INPUT_BYTES {
+        return Err(TextError::TooLong {
+            len,
+            max: MAX_INPUT_BYTES,
+        });
+    }
+    Ok(())
+}
+
 /// Canonicalizes `text` (see the crate docs).
 ///
 /// # Errors
 /// [`TextError::TooLong`] when `text` exceeds [`MAX_INPUT_BYTES`].
 #[allow(clippy::many_single_char_names)] // s/b/i/r/w: the scanner's conventional names
 pub fn normalize(text: &str, config: NormalizeConfig) -> Result<Normalized<'_>, TextError> {
-    if text.len() > MAX_INPUT_BYTES {
-        return Err(TextError::TooLong {
-            len: text.len(),
-            max: MAX_INPUT_BYTES,
-        });
-    }
+    check_len(text.len())?;
     let nfc = nfc::nfc_with_map(text);
     let spans = protect::detect(&nfc.text);
     let s = nfc.text.as_str();
@@ -484,6 +490,62 @@ mod tests {
         assert_eq!(
             TextError::TooLong { len: 2, max: 1 }.to_string(),
             "input is 2 bytes (max 1)"
+        );
+    }
+
+    #[test]
+    fn size_gate_is_inclusive_and_pinned() {
+        assert_eq!(MAX_INPUT_BYTES, 16_777_216);
+        assert_eq!(check_len(MAX_INPUT_BYTES), Ok(()));
+        assert_eq!(
+            check_len(MAX_INPUT_BYTES + 1),
+            Err(TextError::TooLong {
+                len: MAX_INPUT_BYTES + 1,
+                max: MAX_INPUT_BYTES
+            })
+        );
+    }
+
+    #[test]
+    fn collapsed_whitespace_maps_to_the_whole_run() {
+        let n = normalize("ab  \t  cd", NormalizeConfig::default()).unwrap();
+        assert_eq!(n.canonical(), "ab cd");
+        assert_eq!(n.to_original(2..3), Span::new(2, 7).unwrap());
+        let n = normalize("x \u{3000}\u{a0}y", NormalizeConfig::default()).unwrap();
+        assert_eq!(n.canonical(), "x y");
+        assert_eq!(n.to_original(1..2), Span::new(1, 7).unwrap());
+        // A single wide whitespace char: the run is exactly that char.
+        let n = normalize("ab\u{3000}cd", NormalizeConfig::default()).unwrap();
+        assert_eq!(n.to_original(2..3), Span::new(2, 5).unwrap());
+    }
+
+    #[test]
+    fn empty_ranges_map_to_segment_edges() {
+        // "e\u{301}x" -> "éx": é is 2 canonical bytes over 3 original bytes, one segment.
+        let n = normalize("e\u{301}x", NormalizeConfig::default()).unwrap();
+        assert_eq!(n.canonical(), "éx");
+        let at = |k: usize| n.to_original(k..k);
+        assert_eq!(at(0), Span::new(0, 0).unwrap()); // at a segment start: its source start
+        assert_eq!(at(1), Span::new(3, 3).unwrap()); // inside a segment: its source end
+        assert_eq!(at(2), Span::new(3, 3).unwrap());
+        assert_eq!(at(3), Span::new(4, 4).unwrap()); // end of text
+    }
+
+    #[test]
+    fn tokens_touching_a_protected_span_stay_free() {
+        let n = normalize("stop`x`now", NormalizeConfig::default()).unwrap();
+        let zones: Vec<(&str, Zone)> = n
+            .tokens()
+            .iter()
+            .map(|t| (n.token_text(t), t.zone()))
+            .collect();
+        assert_eq!(
+            zones,
+            [
+                ("stop", Zone::Free),
+                ("x", Zone::Protected(ProtectedKind::InlineCode)),
+                ("now", Zone::Free)
+            ]
         );
     }
 
