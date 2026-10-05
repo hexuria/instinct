@@ -669,9 +669,9 @@ impl Lexicon {
             return None;
         }
         let q: Vec<char> = word.chars().collect();
-        // Beyond longest_single + 2 chars no term is within distance 2: bounds the work on
-        // pathological long tokens.
-        if q.len() < MIN_REPAIR_CHARS || q.len() > self.longest_single + 2 {
+        // More than 2 chars beyond longest_single, no term is within distance 2: bounds the
+        // work on pathological long tokens.
+        if q.len() < MIN_REPAIR_CHARS || q.len().saturating_sub(2) > self.longest_single {
             return None;
         }
         let mut candidates = BTreeSet::new();
@@ -680,16 +680,17 @@ impl Lexicon {
                 candidates.extend(ids.iter().copied());
             }
         }
-        let mut best: Option<(repair::Cost, EntryId)> = None;
-        for e in candidates {
-            let entry = &self.entries[e.0 as usize];
-            if let Some(c) = repair::cost(&q, &entry.chars, max_edits(entry.chars.len())) {
-                // Ids follow term order, so (cost, id) breaks remaining ties lexically.
-                if c.0 > 0 && best.is_none_or(|b| (c, e) < b) {
-                    best = Some((c, e));
-                }
-            }
-        }
+        // Ids follow term order, so the least (cost, id) breaks remaining ties lexically. Cost 0
+        // is an exact term, which the exact stage owns.
+        let best = candidates
+            .into_iter()
+            .filter_map(|e| {
+                let entry = &self.entries[e.0 as usize];
+                repair::cost(&q, &entry.chars, max_edits(entry.chars.len()))
+                    .filter(|c| c.0 != 0)
+                    .map(|c| (c, e))
+            })
+            .min();
         best.map(|(c, e)| {
             let edits = u8::try_from(c.0).unwrap_or(u8::MAX);
             let penalty = Confidence::saturating(
