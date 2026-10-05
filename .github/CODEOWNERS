@@ -3,11 +3,11 @@
 # exists (an owner listed here must have write access, or GitHub ignores the line).
 *                               @hexuria
 /crates/                        @hexuria
-/packs/pua-pack-autosteer/      @hexuria
-/packs/pua-pack-gateway-shape/  @hexuria
-/packs/pua-pack-bir-fields/     @hexuria
-/packs/pua-pack-ocr-labels/     @hexuria
-/packs/pua-pack-tool-selection/ @hexuria
+/packs/pua-steer/      @hexuria
+/packs/pua-gateway/  @hexuria
+/packs/pua-bir/     @hexuria
+/packs/pua-ocr/     @hexuria
+/packs/pua-toolbox/ @hexuria
 /.github/                       @hexuria
 /deny.toml                      @hexuria
 /scripts/                       @hexuria

@@ -40,17 +40,17 @@ belongs to Jev.
 
 | Consumer | Use | Pack |
 |---|---|---|
-| **NativeChat** (first) | `OnSend::Auto`: suggest queue / steer / interrupt while a turn is running; interrupt is never automatic; off by default | `pua-pack-autosteer` |
-| **opengrok-server** (optional, flagged off) | advise route, queued-message annotation, workflow `match` step, reviewer pre-filter before Jev | `pua-pack-autosteer`, core crates |
-| **open-ai-gateway** | advisory integer shape features only; never maps wording to a tier | `pua-pack-gateway-shape` |
-| **buwiz-forms** | COR OCR label extraction with an offset map (fixes the label-offset bug), Ñ-safe folding, field suggestions; never claims TIN validity | `pua-pack-ocr-labels`, `pua-pack-bir-fields` |
+| **NativeChat** (first) | `OnSend::Auto`: suggest queue / steer / interrupt while a turn is running; interrupt is never automatic; off by default | `pua-steer` |
+| **opengrok-server** (optional, flagged off) | advise route, queued-message annotation, workflow `match` step, reviewer pre-filter before Jev | `pua-steer`, core crates |
+| **open-ai-gateway** | advisory integer shape features only; never maps wording to a tier | `pua-gateway` |
+| **buwiz-forms** | COR OCR label extraction with an offset map (fixes the label-offset bug), Ñ-safe folding, field suggestions; never claims TIN validity | `pua-ocr`, `pua-bir` |
 
-A `pua-pack-tool-selection` pack is also specified; its first consumer is still open.
+A `pua-toolbox` pack is also specified; its first consumer is still open.
 
 Consumers pin PUA by **git tag or rev**, never a branch:
 
 ```toml
-pua-pack-autosteer = { git = "https://github.com/hexuria/pua", tag = "v0.1.0" }
+pua-steer = { git = "https://github.com/hexuria/pua", tag = "v0.1.0" }
 ```
 
 No PUA crate depends on an opengrok crate, or on tokio, axum, sqlx, reqwest, hyper or typesafe-sdk.
@@ -59,8 +59,8 @@ No PUA crate depends on an opengrok crate, or on tokio, axum, sqlx, reqwest, hyp
 
 ```text
 crates/  pua-core  pua-text  pua-lexicon  pua-rules  pua-hdc  pua-graph  pua-explain  pua-jev
-packs/   pua-pack-autosteer  pua-pack-gateway-shape  pua-pack-bir-fields  pua-pack-ocr-labels
-         pua-pack-tool-selection
+packs/   pua-steer  pua-gateway  pua-bir  pua-ocr
+         pua-toolbox
 docs/    spec.md
 ```
 

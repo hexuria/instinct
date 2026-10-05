@@ -95,11 +95,11 @@ crates/
   pua-explain/   trail, reasons, scorer kind, replay record (serde), diff of two replays
   pua-jev/       Jev wire shapes (noul/choice/score) <-> core types; NO HTTP client
 packs/
-  pua-pack-autosteer/
-  pua-pack-gateway-shape/
-  pua-pack-bir-fields/
-  pua-pack-ocr-labels/
-  pua-pack-tool-selection/
+  pua-steer/
+  pua-gateway/
+  pua-bir/
+  pua-ocr/
+  pua-toolbox/
 ```
 
 Today the repo holds only the workspace manifest, the toolchain pin and empty stubs (`lib.rs` with
@@ -134,7 +134,15 @@ pua-explain: pua-core
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
 pua-jev: pua-core
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
-pua-pack-*: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
+pua-steer: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-gateway: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-bir: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-ocr: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-toolbox: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
 ```
 
@@ -161,7 +169,7 @@ allowed for PUA.
 ```toml
 # nativechat / opengrok-server / open-ai-gateway / buwiz-forms Cargo.toml
 pua-core = { git = "https://github.com/hexuria/pua", tag = "v0.1.0" }
-pua-pack-autosteer = { git = "https://github.com/hexuria/pua", tag = "v0.1.0" }
+pua-steer = { git = "https://github.com/hexuria/pua", tag = "v0.1.0" }
 # or: rev = "<full sha>"
 ```
 
@@ -492,7 +500,7 @@ Invariances columns: **Invariant under** (answer must not change) / **Equivarian
 indices move with the input) / **Explicitly NOT a symmetry** (with reason) / **Elementary moves** (for
 the §5.1 generator-sequence proptests).
 
-### 6.1 `pua-pack-autosteer`
+### 6.1 `pua-steer`
 
 This was `delivery-advisor-spec.md` (opengrok-server PR #369). The question is
 `Choice{ name: "delivery", options: [queue (safe default), steer, interrupt] }`.
@@ -524,7 +532,7 @@ This was `delivery-advisor-spec.md` (opengrok-server PR #369). The question is
 - Scorer kind: control-word cues are `Max` (strongest cue wins, with a critical set); target similarity
   is `Sum`.
 
-### 6.2 `pua-pack-gateway-shape`
+### 6.2 `pua-gateway`
 
 | Domain | Symmetry | Structure | Distance |
 |---|---|---|---|
@@ -541,7 +549,7 @@ This was `delivery-advisor-spec.md` (opengrok-server PR #369). The question is
 - It **never maps wording to a tier**. That respects `oag-router/src/classify.rs:98-100` and
   `oag-core/src/config.rs:456-470` (A §2.1).
 
-### 6.3 `pua-pack-bir-fields`
+### 6.3 `pua-bir`
 
 | Domain | Symmetry | Structure | Distance |
 |---|---|---|---|
@@ -560,7 +568,7 @@ This was `delivery-advisor-spec.md` (opengrok-server PR #369). The question is
 - Output is always a **suggestion** with a reason. The string "valid" is never emitted for a TIN.
   bir-rules owns validation (A §5.1).
 
-### 6.4 `pua-pack-ocr-labels`
+### 6.4 `pua-ocr`
 
 | Domain | Symmetry | Structure | Distance |
 |---|---|---|---|
@@ -579,7 +587,7 @@ This was `delivery-advisor-spec.md` (opengrok-server PR #369). The question is
 - Per-field confidence from the match type (exact label, repaired label, next-line value) instead of the
   hard-coded `0.6` (`cor_ocr.rs:418-422`).
 
-### 6.5 `pua-pack-tool-selection`
+### 6.5 `pua-toolbox`
 
 | Domain | Symmetry | Structure | Distance |
 |---|---|---|---|
@@ -622,7 +630,7 @@ This was `delivery-advisor-spec.md` (opengrok-server PR #369). The question is
   text-in-field (`components/chat_input/mod.rs:186-197`) and can't host it. Register gpui-agent stable
   ids in `src/agent/host.rs`.
 - Runs locally: zero network, works offline. Default off.
-- Pin: `pua-pack-autosteer` by tag (§3.2).
+- Pin: `pua-steer` by tag (§3.2).
 
 ### 7.2 opengrok-server (optional, flag `[pua] enabled = false`)
 
@@ -751,7 +759,7 @@ Phase B. **Today: spec only**, with empty crate stubs.
   Domain/Symmetry/Structure/Distance header (§6); options-vs-candidates tie-break fix (§5 rule 4); new
   property tests (§5.1); `pua-graph` (§4.8); the Jev normalized-input question (§8, q13); the hdc sizing
   note (§4.5); symbolic hierarchies (§4.3); max-vs-sum scorer labels (§4.7).
-- New `pua-pack-tool-selection` (§6.5).
+- New `pua-toolbox` (§6.5).
 
 ## 12. Open questions
 

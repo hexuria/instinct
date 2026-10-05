@@ -10,7 +10,7 @@ Status as of the T11–T17 stack tip. Proven claims are bounded; Deferred items 
 | Decision path is integer-only | Floats only in `pua-jev/src/convert.rs` (one boundary) | `float_arithmetic` denied workspace-wide; convert module local `#[allow]` |
 | `unsafe` is forbidden | Every crate `#![forbid(unsafe_code)]` | CI repo rules + architecture |
 | Deterministic packs | No HashMap/HashSet/clocks/RNG/env in decision paths | clippy bans; generator-sequence / permutation proptests per pack |
-| Offset map indexes original text | `Span` values from ocr-labels / text normalize | A §5.3 cases in `pua-pack-ocr-labels`; span equivariance proptests in `pua-text` |
+| Offset map indexes original text | `Span` values from ocr-labels / text normalize | A §5.3 cases in `pua-ocr`; span equivariance proptests in `pua-text` |
 | Interrupt never auto-applies | `AutoApply::Never` on interrupt | ADR 0008; autosteer eval FP=0 |
 | TIN suggestions never say "valid" | Type + string scan | `SuggestionKind` / reason tests; bir-fields mutants |
 | Gateway shape has no tier type | Public API is integer `ShapeFeatures` only | crate docs + compile-time surface test |

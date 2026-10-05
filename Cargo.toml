@@ -11,11 +11,11 @@ members = [
     "crates/pua-graph",
     "crates/pua-explain",
     "crates/pua-jev",
-    "packs/pua-pack-autosteer",
-    "packs/pua-pack-gateway-shape",
-    "packs/pua-pack-bir-fields",
-    "packs/pua-pack-ocr-labels",
-    "packs/pua-pack-tool-selection",
+    "packs/pua-steer",
+    "packs/pua-gateway",
+    "packs/pua-bir",
+    "packs/pua-ocr",
+    "packs/pua-toolbox",
     "benches",
 ]
 
@@ -37,11 +37,11 @@ pua-hdc = { path = "crates/pua-hdc" }
 pua-graph = { path = "crates/pua-graph" }
 pua-explain = { path = "crates/pua-explain" }
 pua-jev = { path = "crates/pua-jev" }
-pua-pack-autosteer = { path = "packs/pua-pack-autosteer" }
-pua-pack-gateway-shape = { path = "packs/pua-pack-gateway-shape" }
-pua-pack-bir-fields = { path = "packs/pua-pack-bir-fields" }
-pua-pack-ocr-labels = { path = "packs/pua-pack-ocr-labels" }
-pua-pack-tool-selection = { path = "packs/pua-pack-tool-selection" }
+pua-steer = { path = "packs/pua-steer" }
+pua-gateway = { path = "packs/pua-gateway" }
+pua-bir = { path = "packs/pua-bir" }
+pua-ocr = { path = "packs/pua-ocr" }
+pua-toolbox = { path = "packs/pua-toolbox" }
 
 # External (permissive only; spec §3.1 candidate list). `pure` keeps blake3 free of C/asm builds.
 blake3 = { version = "1.8.7", default-features = false, features = ["pure"] }
