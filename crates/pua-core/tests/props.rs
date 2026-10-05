@@ -193,6 +193,26 @@ fn exact_boundaries_and_conversions() {
     if let Answer::Choice { ranked, .. } = a {
         assert_eq!(Vec::from(ranked).len(), 2);
     }
+    // Ranked rejects an equal-confidence pair in descending index order (tie order is part of
+    // the contract) and accepts the canonical order.
+    let ranked = |v: Vec<(u16, i16)>| {
+        pua_core::Ranked::try_from(
+            v.into_iter()
+                .map(|(i, x)| (OptionIndex::new(i), c(x)))
+                .collect::<Vec<_>>(),
+        )
+    };
+    assert!(ranked(vec![(1, 500), (0, 500)]).is_err());
+    assert!(ranked(vec![(0, 500), (1, 500)]).is_ok());
+    assert!(ranked(vec![(1, 600), (0, 500)]).is_ok());
+    // Span relations: containment needs both ends inside; touching spans do not overlap.
+    let sp = |a, b| pua_core::Span::new(a, b).unwrap();
+    assert!(sp(0, 5).contains(sp(1, 5)));
+    assert!(!sp(0, 5).contains(sp(3, 8)));
+    assert!(!sp(2, 5).contains(sp(0, 4)));
+    assert!(sp(0, 3).overlaps(sp(2, 5)));
+    assert!(!sp(0, 3).overlaps(sp(3, 5)));
+    assert!(!sp(3, 5).overlaps(sp(0, 3)));
     // 65535 options are allowed (upper bound inclusive).
     let many: Vec<String> = (0..usize::from(u16::MAX)).map(|i| i.to_string()).collect();
     assert_eq!(Options::new(&many).unwrap().len(), u16::MAX);

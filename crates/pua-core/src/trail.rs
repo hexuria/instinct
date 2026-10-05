@@ -196,6 +196,7 @@ mod tests {
                 .millis(Millis::new(700).unwrap()),
         );
         assert_eq!(t.len(), 2);
+        assert!(!t.is_empty());
         let r = &t.records()[1];
         assert_eq!(r.step(), 2);
         assert_eq!(r.stage(), StageKind::Rules);
