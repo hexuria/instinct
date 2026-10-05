@@ -17,6 +17,7 @@ members = ["."]
 libfuzzer-sys = "0.4"
 pua-core = { path = "../crates/pua-core" }
 pua-graph = { path = "../crates/pua-graph", features = ["spd-wl"] }
+pua-jev = { path = "../crates/pua-jev" }
 pua-lexicon = { path = "../crates/pua-lexicon" }
 pua-rules = { path = "../crates/pua-rules" }
 pua-text = { path = "../crates/pua-text" }
@@ -45,6 +46,13 @@ bench = false
 [[bin]]
 name = "graph_from_bytes"
 path = "fuzz_targets/graph_from_bytes.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "jev_reply_parse"
+path = "fuzz_targets/jev_reply_parse.rs"
 test = false
 doc = false
 bench = false
