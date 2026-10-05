@@ -283,3 +283,73 @@ fn iteration_cap_bounds_are_exact() {
         "resonator iteration cap 17 outside 1..=16"
     );
 }
+
+#[test]
+fn decode_subtracts_the_estimated_contribution() {
+    let b = book(&["a", "b", "c"]);
+    let (va, vb, vc) = (hv("a"), hv("b"), hv("c"));
+    // 3a + b: after removing 3a exactly, what is left is b, which scores exactly 1000.
+    let mut acc = Accumulator::new();
+    acc.add(&va, 3);
+    acc.add(&vb, 1);
+    let got = b.decode(&acc, 2, Millis::MIN);
+    assert_eq!((b.id(got[0].0), b.id(got[1].0)), ("a", "b"));
+    assert_eq!(got[1].1, Millis::MAX);
+    // 3a − 2b − 2c: the negative estimate (round half away from zero) removes −2b exactly,
+    // leaving −2c, which scores exactly −1000.
+    let mut acc = Accumulator::new();
+    acc.add(&va, 3);
+    acc.add(&vb, -2);
+    acc.add(&vc, -2);
+    let got = b.decode(&acc, 3, Millis::MIN);
+    assert_eq!(b.id(got[0].0), "a");
+    assert_eq!(got[2].1, Millis::MIN);
+}
+
+#[test]
+fn decode_ties_and_inclusive_floor() {
+    let v = hv("same");
+    let tied = Codebook::new([("y".to_owned(), v), ("x".to_owned(), v)]).unwrap();
+    let mut acc = Accumulator::new();
+    acc.add(&v, 1);
+    assert_eq!(tied.decode(&acc, 1, Millis::MIN), [(0, Millis::MAX)]);
+    // The floor is inclusive.
+    assert_eq!(tied.decode(&acc, 1, Millis::MAX), [(0, Millis::MAX)]);
+}
+
+#[test]
+fn nearest_margin_is_top_minus_runner_up() {
+    let names: Vec<String> = (0..20).map(|i| format!("m{i}")).collect();
+    let b = book(&names.iter().map(String::as_str).collect::<Vec<_>>());
+    for q in ["m3", "zz", "m19", "other"] {
+        let qv = hv(q);
+        let mut sims: Vec<i16> = b.vectors().iter().map(|v| qv.similarity(v).get()).collect();
+        let n = b.nearest(&qv);
+        sims.sort_unstable();
+        let (top, second) = (sims[sims.len() - 1], sims[sims.len() - 2]);
+        assert_eq!(n.margin.get(), top - second, "{q}");
+    }
+}
+
+#[test]
+fn resonator_iteration_counts_are_pinned() {
+    // Deterministic: the count is part of the behaviour (and of the trail a pack writes).
+    let a_names: Vec<String> = (0..8).map(|i| format!("intent{i}")).collect();
+    let b_names: Vec<String> = (0..8).map(|i| format!("target{i}")).collect();
+    let ab = book(&a_names.iter().map(String::as_str).collect::<Vec<_>>());
+    let bb = book(&b_names.iter().map(String::as_str).collect::<Vec<_>>());
+    let q = hv("intent3").bind(&hv("target5"));
+    let Resonance::Converged { iterations, .. } = resonate(&q, &ab, &bb, IterationCap::MAX) else {
+        panic!("expected convergence");
+    };
+    // A fixed point needs both estimates unchanged: with a cap of `iterations - 1` it must not
+    // be confirmed yet.
+    assert!(iterations >= 2);
+    assert_eq!(
+        resonate(&q, &ab, &bb, IterationCap::new(iterations - 1).unwrap()),
+        Resonance::NotConverged {
+            iterations: iterations - 1
+        }
+    );
+    assert_eq!(Encoder::new("x", 2).version(), 2);
+}
