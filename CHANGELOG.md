@@ -16,3 +16,4 @@ to public types bumps MAJOR (MINOR while 0.x).
 - `pua-lexicon`: closed-vocabulary matching with typo repair and the OCR digit table.
 - `pua-rules`: data-driven cue rules with negation, question damper and object scope (ADR 0005).
 - `pua-hdc`: packed hypervectors, seeded encoder, codebook decode, resonator; measured capacity table.
+- `pua-graph`: 1-WL fingerprints with per-node colours; optional `spd-wl`.
