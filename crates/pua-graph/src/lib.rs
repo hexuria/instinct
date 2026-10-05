@@ -9,6 +9,7 @@
 //! - [`Rounds::Fixed`] (default 3, portable) or [`Rounds::ToStability`] (≤ n rounds, stops
 //!   when the colour partition stops refining).
 //! - [`Refinement::fingerprint`]: blake3 over tag, rounds and the sorted final colours.
+//! - [`label_of`]: a stable `u64` label from domain key bytes.
 //!
 //! **Semantics.** A different fingerprint means the structures differ (modulo a 256-bit hash
 //! collision). The same fingerprint means **WL-equivalent, not isomorphic**: `C₆` and two
@@ -323,6 +324,29 @@ fn refine_with(
         mode,
         requested: rounds,
     }
+}
+
+/// A stable `u64` node or edge label from a sequence of byte parts: the first 8 bytes
+/// (little-endian) of `blake3(tag ‖ len ‖ part ‖ len ‖ part …)`. Length-prefixing keeps
+/// `["ab", "c"]` and `["a", "bc"]` apart. Use it to turn domain keys (tool ids, field names)
+/// into labels without each consumer inventing its own hash.
+///
+/// ```
+/// use pua_graph::label_of;
+/// assert_eq!(label_of(&[b"fs.read"]), label_of(&[b"fs.read"]));
+/// assert_ne!(label_of(&[b"ab", b"c"]), label_of(&[b"a", b"bc"]));
+/// ```
+pub fn label_of(parts: &[&[u8]]) -> u64 {
+    let mut h = blake3::Hasher::new();
+    h.update(b"pua-graph/label/1");
+    for p in parts {
+        h.update(&(p.len() as u64).to_le_bytes());
+        h.update(p);
+    }
+    let d = h.finalize();
+    let mut out = [0u8; 8];
+    out.copy_from_slice(&d.as_bytes()[..8]);
+    u64::from_le_bytes(out)
 }
 
 /// 1-WL colour refinement (spec §4.8).

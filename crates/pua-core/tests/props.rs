@@ -8,8 +8,7 @@
 
 use proptest::prelude::*;
 use pua_core::{
-    Answer, CandidateId, CandidatePick, Confidence, OptionIndex, Profile, Question, Scores, decide,
-    rank_candidates,
+    Answer, CandidateId, CandidateSet, Confidence, OptionIndex, Profile, Question, Scores, decide,
 };
 
 fn profile() -> impl Strategy<Value = Profile> {
@@ -110,7 +109,7 @@ proptest! {
 
     #[test]
     fn candidate_permutation_is_invariant(
-        scores in prop::collection::vec(conf(), 0..16),
+        scores in prop::collection::vec(conf(), 2..16),
         perm_seed in prop::collection::vec(any::<u32>(), 16),
         p in profile(),
     ) {
@@ -119,23 +118,40 @@ proptest! {
             .enumerate()
             .map(|(i, c)| (CandidateId::new(&format!("run_{i:02}")).unwrap(), *c))
             .collect();
-        let mut shuffled = items.clone();
-        let mut order: Vec<usize> = (0..shuffled.len()).collect();
+        let mut order: Vec<usize> = (0..items.len()).collect();
         order.sort_by_key(|i| (perm_seed[*i], *i));
-        shuffled = order.iter().map(|i| shuffled[*i].clone()).collect();
-        let a = rank_candidates(items).unwrap();
-        let b = rank_candidates(shuffled).unwrap();
-        prop_assert_eq!(&a, &b);
-        prop_assert_eq!(a.pick(p), b.pick(p));
+        let shuffled: Vec<_> = order.iter().map(|i| items[*i].clone()).collect();
+        let pick = |items: &[(CandidateId, Confidence)]| {
+            let set = CandidateSet::new(items.iter().map(|e| e.0.clone())).unwrap();
+            let q = set.question("run").unwrap();
+            let mut sc = Scores::new(&q);
+            for (id, c) in items {
+                sc.set(set.index_of(id.as_str()).unwrap(), *c).unwrap();
+            }
+            let a = decide(&sc, p);
+            (set.chosen(&a).cloned(), a)
+        };
+        prop_assert_eq!(pick(&items), pick(&shuffled));
     }
 
     #[test]
-    fn picked_candidate_clears_both_thresholds(scores in prop::collection::vec(conf(), 0..8), p in profile()) {
-        let items = scores.iter().enumerate().map(|(i, c)| (CandidateId::new(&i.to_string()).unwrap(), *c));
-        let r = rank_candidates(items).unwrap();
-        if let CandidatePick::Picked { confidence, margin, .. } = r.pick(p) {
+    fn picked_candidate_clears_both_thresholds(scores in prop::collection::vec(conf(), 2..8), p in profile()) {
+        let set = CandidateSet::new((0..scores.len()).map(|i| CandidateId::new(&i.to_string()).unwrap())).unwrap();
+        let q = set.question("c").unwrap();
+        let mut sc = Scores::new(&q);
+        for (i, c) in scores.iter().enumerate() {
+            sc.set(set.index_of(&i.to_string()).unwrap(), *c).unwrap();
+        }
+        let a = decide(&sc, p);
+        if let Some(id) = set.chosen(&a) {
+            let mine = scores[id.as_str().parse::<usize>().unwrap()];
+            let mut rest: Vec<Confidence> = scores.clone();
+            rest.sort_unstable_by(|x, y| y.cmp(x));
             let t = p.thresholds();
-            prop_assert!(confidence >= t.min_confidence && margin >= t.min_margin);
+            prop_assert_eq!(mine, rest[0]);
+            prop_assert!(mine >= t.min_confidence && mine.saturating_sub(rest[1]) >= t.min_margin);
+        } else {
+            prop_assert!(a.is_abstain());
         }
     }
 }
@@ -153,16 +169,14 @@ fn exact_boundaries_and_conversions() {
     assert_eq!(Millis::try_from(-5i16).unwrap().get(), -5);
     assert_eq!(Millis::new(-12).unwrap().to_string(), "-12");
     assert_eq!(c(12).to_string(), "12");
-    // Candidate thresholds are inclusive minimums, exactly like decide.
+    // Candidate thresholds are inclusive minimums: candidates go through decide.
     let id = |s: &str| CandidateId::new(s).unwrap();
-    let at_min = rank_candidates([(id("a"), c(750)), (id("b"), c(600))]).unwrap();
-    assert!(matches!(
-        at_min.pick(Profile::Standard),
-        CandidatePick::Picked { .. }
-    ));
-    let empty = rank_candidates([]).unwrap();
-    assert!(empty.is_empty() && empty.entries().is_empty());
-    assert!(!at_min.is_empty());
+    let set = CandidateSet::new([id("b"), id("a")]).unwrap();
+    let cq = set.question("c").unwrap();
+    let mut sc = Scores::new(&cq);
+    sc.set(OptionIndex::new(0), c(750)).unwrap();
+    sc.set(OptionIndex::new(1), c(600)).unwrap();
+    assert_eq!(set.chosen(&decide(&sc, Profile::Standard)), Some(&id("a")));
     // Accessors return what was stored.
     let q = question(2);
     let o: &Options = q.options().unwrap();

@@ -31,7 +31,7 @@ pub use input::{Input, LiveRun};
 
 use core::fmt;
 
-use pua_core::{DataVersion, Decision, Pack, Profile, Question};
+use pua_core::{DataVersion, Decision, Profile, Question};
 use pua_lexicon::LexiconSpec;
 use pua_rules::{ClassifierError, ClassifierSpec, OnConfusable, RuleClassifier, RuleSetSpec};
 use pua_text::NormalizeConfig;
@@ -141,18 +141,19 @@ impl Autosteer {
     }
 }
 
-impl Pack for Autosteer {
-    type Input<'a> = Input<'a>;
-
-    fn question(&self) -> &Question {
+impl Autosteer {
+    /// The question this pack answers.
+    pub fn question(&self) -> &Question {
         self.classifier.question()
     }
 
-    fn data_version(&self) -> DataVersion {
+    /// Digest of everything that can change an answer.
+    pub fn data_version(&self) -> DataVersion {
         self.classifier.data_version()
     }
 
-    fn ask(&self, input: &Self::Input<'_>, profile: Profile) -> Decision {
+    /// Answers the question for `input`. Pure: same input + profile gives the same bytes.
+    pub fn ask(&self, input: &Input<'_>, profile: Profile) -> Decision {
         self.classifier.decide(input.text(), profile)
     }
 }
@@ -160,7 +161,7 @@ impl Pack for Autosteer {
 /// Re-exports used by the eval / replay examples.
 pub mod prelude {
     pub use crate::{ALGORITHM_TAG, Advice, AutoApply, Autosteer, Input, PackError, option};
-    pub use pua_core::{Answer, Decision, OptionIndex, Pack, Profile};
+    pub use pua_core::{Answer, Decision, OptionIndex, Profile};
 }
 
 #[cfg(test)]

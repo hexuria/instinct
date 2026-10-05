@@ -1,14 +1,13 @@
-//! Candidates are a SET (spec §5 rule 4): ordered by score descending, then id ascending.
-//! Input order never matters.
+//! Candidates are a SET (spec §5 rule 4): sorted by id, unique. Input order never matters.
 
 use core::fmt;
 
-use crate::{AbstainReason, Confidence, Profile};
+use crate::{Answer, OptionIndex, Question, QuestionError};
 
 /// Maximum candidate id length in bytes.
 pub const MAX_ID_BYTES: usize = 256;
 
-/// Errors from building or ranking candidates.
+/// Errors from building candidates.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum CandidateError {
@@ -78,51 +77,30 @@ impl From<CandidateId> for String {
     }
 }
 
-/// Candidates in canonical order: confidence descending, then id ascending.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct RankedCandidates(Box<[(CandidateId, Confidence)]>);
-
-/// Ranks a candidate set.
+/// A finite candidate set: ids sorted ascending and unique, so input order can never matter.
 ///
-/// # Errors
-/// [`CandidateError::Duplicate`] when an id appears twice.
-pub fn rank_candidates(
-    items: impl IntoIterator<Item = (CandidateId, Confidence)>,
-) -> Result<RankedCandidates, CandidateError> {
-    let mut v: Vec<(CandidateId, Confidence)> = items.into_iter().collect();
-    v.sort_by(|a, b| a.0.cmp(&b.0));
-    if let Some(w) = v.windows(2).find(|w| w[0].0 == w[1].0) {
-        return Err(CandidateError::Duplicate(w[0].0.clone()));
-    }
-    v.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
-    Ok(RankedCandidates(v.into_boxed_slice()))
-}
-
-/// The outcome of picking one candidate.
+/// The set turns into a [`Question::Choice`] whose option `i` is the `i`-th id, which lets every
+/// candidate decision go through the one gate in [`crate::decide`]: exact ties rank the lower
+/// id first and, because every profile margin is positive, abstain.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(tag = "pick", rename_all = "snake_case"))]
-pub enum CandidatePick {
-    /// A candidate cleared both thresholds.
-    Picked {
-        /// The chosen id.
-        id: CandidateId,
-        /// Its confidence.
-        confidence: Confidence,
-        /// Gap to the runner-up (or to zero when alone).
-        margin: Confidence,
-    },
-    /// Not sure; the ranked set is returned for chips or escalation.
-    Abstain {
-        /// Why.
-        why: AbstainReason,
-    },
-}
+pub struct CandidateSet(Box<[CandidateId]>);
 
-impl RankedCandidates {
-    /// The ranked entries.
-    pub fn entries(&self) -> &[(CandidateId, Confidence)] {
+impl CandidateSet {
+    /// Builds the set.
+    ///
+    /// # Errors
+    /// [`CandidateError::Duplicate`] when an id appears twice.
+    pub fn new(ids: impl IntoIterator<Item = CandidateId>) -> Result<Self, CandidateError> {
+        let mut v: Vec<CandidateId> = ids.into_iter().collect();
+        v.sort();
+        if let Some(w) = v.windows(2).find(|w| w[0] == w[1]) {
+            return Err(CandidateError::Duplicate(w[0].clone()));
+        }
+        Ok(Self(v.into_boxed_slice()))
+    }
+
+    /// The ids, ascending.
+    pub fn ids(&self) -> &[CandidateId] {
         &self.0
     }
 
@@ -131,41 +109,40 @@ impl RankedCandidates {
         self.0.len()
     }
 
-    /// Whether there are no candidates.
+    /// Whether the set is empty.
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 
-    /// Applies the profile thresholds (same rules as [`crate::decide`]).
-    pub fn pick(&self, profile: Profile) -> CandidatePick {
-        let t = profile.thresholds();
-        let Some((top_id, top_c)) = self.0.first() else {
-            return CandidatePick::Abstain {
-                why: AbstainReason::NoCandidates,
-            };
-        };
-        let second = self.0.get(1).map_or(Confidence::ZERO, |e| e.1);
-        let margin = top_c.saturating_sub(second);
-        if *top_c < t.min_confidence {
-            return CandidatePick::Abstain {
-                why: AbstainReason::LowConfidence {
-                    top: *top_c,
-                    min: t.min_confidence,
-                },
-            };
-        }
-        if margin < t.min_margin {
-            return CandidatePick::Abstain {
-                why: AbstainReason::LowMargin {
-                    margin,
-                    min: t.min_margin,
-                },
-            };
-        }
-        CandidatePick::Picked {
-            id: top_id.clone(),
-            confidence: *top_c,
-            margin,
+    /// A `Choice` named `name` whose options are the ids in ascending order.
+    ///
+    /// # Errors
+    /// [`QuestionError`] when the set has fewer than 2 or too many candidates.
+    pub fn question(&self, name: &str) -> Result<Question, QuestionError> {
+        let labels: Vec<&str> = self.0.iter().map(CandidateId::as_str).collect();
+        Question::choice(name, &labels)
+    }
+
+    /// The id behind option `i`.
+    pub fn id(&self, i: OptionIndex) -> Option<&CandidateId> {
+        self.0.get(usize::from(i.get()))
+    }
+
+    /// The option index of `id`.
+    pub fn index_of(&self, id: &str) -> Option<OptionIndex> {
+        self.0
+            .binary_search_by(|c| c.as_str().cmp(id))
+            .ok()
+            .and_then(|i| u16::try_from(i).ok())
+            .map(OptionIndex::new)
+    }
+
+    /// The chosen id. `None` for [`Answer::Abstain`] (and for Noul / Score answers), so a caller
+    /// cannot act on an abstain by accident.
+    pub fn chosen(&self, answer: &Answer) -> Option<&CandidateId> {
+        match answer {
+            Answer::Choice { option, .. } => self.id(*option),
+            _ => None,
         }
     }
 }
@@ -176,9 +153,6 @@ mod tests {
 
     fn id(s: &str) -> CandidateId {
         CandidateId::new(s).unwrap()
-    }
-    fn c(v: i16) -> Confidence {
-        Confidence::new(v).unwrap()
     }
 
     #[test]
@@ -198,56 +172,46 @@ mod tests {
 
     #[test]
     fn duplicate_is_an_error() {
-        let r = rank_candidates([(id("a"), c(1)), (id("b"), c(2)), (id("a"), c(3))]);
+        let r = CandidateSet::new([id("a"), id("b"), id("a")]);
         assert_eq!(r, Err(CandidateError::Duplicate(id("a"))));
     }
 
     #[test]
-    fn order_is_score_desc_then_id_asc() {
-        let r = rank_candidates([(id("b"), c(5)), (id("a"), c(5)), (id("c"), c(9))]).unwrap();
-        let ids: Vec<&str> = r.entries().iter().map(|e| e.0.as_str()).collect();
-        assert_eq!(ids, ["c", "a", "b"]);
-        assert_eq!(r.len(), 3);
-        assert!(!r.is_empty());
+    fn set_is_sorted_and_maps_both_ways() {
+        let s = CandidateSet::new([id("fs.write"), id("fs.read"), id("git.log")]).unwrap();
+        let ids: Vec<&str> = s.ids().iter().map(CandidateId::as_str).collect();
+        assert_eq!(ids, ["fs.read", "fs.write", "git.log"]);
+        assert_eq!((s.len(), s.is_empty()), (3, false));
+        assert_eq!(s.index_of("fs.write"), Some(OptionIndex::new(1)));
+        assert_eq!(s.index_of("nope"), None);
+        assert_eq!(s.id(OptionIndex::new(2)), Some(&id("git.log")));
+        assert_eq!(s.id(OptionIndex::new(3)), None);
+        let q = s.question("tool").unwrap();
+        assert_eq!(q.arity(), 3);
+        assert_eq!(q.options().unwrap().labels()[0].as_str(), "fs.read");
+        let empty = CandidateSet::new([]).unwrap();
+        assert!(empty.is_empty());
+        assert_eq!(empty.question("t"), Err(QuestionError::TooFewOptions(0)));
     }
 
     #[test]
-    fn pick_rules() {
-        let empty = rank_candidates([]).unwrap();
-        assert_eq!(
-            empty.pick(Profile::Deep),
-            CandidatePick::Abstain {
-                why: AbstainReason::NoCandidates
-            }
-        );
-        let alone = rank_candidates([(id("a"), c(800))]).unwrap();
-        assert_eq!(
-            alone.pick(Profile::Standard),
-            CandidatePick::Picked {
-                id: id("a"),
-                confidence: c(800),
-                margin: c(800)
-            }
-        );
-        let low = rank_candidates([(id("a"), c(700))]).unwrap();
-        assert_eq!(
-            low.pick(Profile::Standard),
-            CandidatePick::Abstain {
-                why: AbstainReason::LowConfidence {
-                    top: c(700),
-                    min: c(750)
-                }
-            }
-        );
-        let close = rank_candidates([(id("a"), c(900)), (id("b"), c(800))]).unwrap();
-        assert_eq!(
-            close.pick(Profile::Standard),
-            CandidatePick::Abstain {
-                why: AbstainReason::LowMargin {
-                    margin: c(100),
-                    min: c(150)
-                }
-            }
-        );
+    fn chosen_is_none_on_abstain() {
+        use crate::{AbstainReason, Confidence, Profile, Scores, abstain, decide};
+        let s = CandidateSet::new([id("a"), id("b")]).unwrap();
+        let q = s.question("t").unwrap();
+        let mut sc = Scores::new(&q);
+        sc.set(OptionIndex::new(1), Confidence::new(900).unwrap())
+            .unwrap();
+        assert_eq!(s.chosen(&decide(&sc, Profile::Standard)), Some(&id("b")));
+        sc.set(OptionIndex::new(0), Confidence::new(850).unwrap())
+            .unwrap();
+        let a = decide(&sc, Profile::Standard);
+        assert!(a.is_abstain());
+        assert_eq!(s.chosen(&a), None);
+        assert_eq!(s.chosen(&abstain(&sc, AbstainReason::NoCandidates)), None);
+        let n = Question::noul("n").unwrap();
+        let mut ns = Scores::new(&n);
+        ns.set(OptionIndex::new(1), Confidence::MAX).unwrap();
+        assert_eq!(s.chosen(&decide(&ns, Profile::Fast)), None);
     }
 }

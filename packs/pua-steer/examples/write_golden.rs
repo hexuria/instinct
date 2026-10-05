@@ -4,7 +4,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use pua_core::{Pack, Profile};
+use pua_core::Profile;
 use pua_explain::ReplayRecord;
 use pua_steer::{Autosteer, Input};
 use serde::{Deserialize, Serialize};

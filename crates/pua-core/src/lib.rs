@@ -5,16 +5,17 @@
 //! - [`Span`]: byte offsets into the **original** text.
 //! - [`Question`] / [`Answer`]: Jev's three shapes (Noul, Choice, Score) plus `Abstain`.
 //! - [`Profile`]: threshold tables (`fast`, `standard`, `deep`, spec §4.6).
-//! - [`decide`] and [`rank_candidates`]: the only places a winner is picked, with the stable
-//!   tie-break of spec §5 rule 4 (options are an ordered list, candidates are a set).
-//! - [`Trail`], [`Decision`], [`DataVersion`] and the [`Pack`] trait.
+//! - [`decide`]: the only place a winner is picked (one threshold-and-margin gate), with the
+//!   stable tie-break of spec §5 rule 4; [`abstain`] for stages that refuse early.
+//! - [`CandidateSet`]: a finite candidate set (sorted, unique ids) as a `Choice`.
+//! - [`Trail`], [`Decision`] and [`DataVersion`].
 //!
 //! Same input + same [`DataVersion`] + same [`Profile`] gives a byte-identical [`Decision`].
 //!
 //! ```
 //! use pua_core::{Answer, Confidence, OptionIndex, Profile, Question, Scores, decide};
 //!
-//! let q = Question::choice("delivery", &["queue", "steer", "interrupt"])?;
+//! let q = Question::choice("route", &["keep", "move", "stop"])?;
 //! let mut scores = Scores::new(&q);
 //! scores.set(OptionIndex::new(1), Confidence::new(820)?)?;
 //! match decide(&scores, Profile::Standard) {
@@ -37,12 +38,10 @@ mod trail;
 mod version;
 
 pub use answer::{AbstainReason, Answer, Ranked};
-pub use candidate::{
-    CandidateError, CandidateId, CandidatePick, MAX_ID_BYTES, RankedCandidates, rank_candidates,
-};
-pub use decide::{Scores, ScoresError, decide};
-pub use pack::{Decision, Pack};
-pub use profile::{HdcMode, Profile, Thresholds};
+pub use candidate::{CandidateError, CandidateId, CandidateSet, MAX_ID_BYTES};
+pub use decide::{Scores, ScoresError, abstain, decide};
+pub use pack::Decision;
+pub use profile::{Profile, Thresholds};
 pub use question::{Label, MAX_LABEL_BYTES, OptionIndex, Options, Question, QuestionError};
 pub use score::{Confidence, Millis, ScoreError};
 pub use span::{Span, SpanError};

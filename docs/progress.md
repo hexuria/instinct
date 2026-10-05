@@ -108,7 +108,8 @@ HDC stays unwired, three profile presets only.
 
 | Step | PR | Scope | Status |
 |---|---|---|---|
-| A1 | this PR | `pua-rules::RuleClassifier` extracted from `Autosteer::pipeline`; `delivery` fixture + golden journal replay byte-identical | open |
+| A1 | #21 | `pua-rules::RuleClassifier` extracted from `Autosteer::pipeline`; `delivery` fixture + golden journal replay byte-identical | merged (6aef318) |
+| A2 | this PR | core: `CandidateSet` + one gate in `decide` + `abstain()` (every abstain carries all options ranked); drop `rank_candidates`/`CandidatePick`/`HdcMode`/`Pack` trait; `pua-lexicon::overlap`; `pua-graph::label_of`; toolbox fixes (`chosen_id` is `None` on abstain, duplicate ids named). Goldens regenerated: `data_version` changes (profile table bytes lost the HDC column) and the confusable row now carries the ranked list | open |
 
 ## Known constraints
 

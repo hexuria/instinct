@@ -29,7 +29,7 @@ pub enum AbstainReason {
     NoCandidates,
     /// An iterative stage (resonator) did not reach a fixed point within its cap.
     NotConverged,
-    /// A confusable (homoglyph / mixed-script) token looked like a control word.
+    /// A confusable (homoglyph / mixed-script) token matched a guarded term.
     Confusable,
 }
 
@@ -40,7 +40,7 @@ impl fmt::Display for AbstainReason {
             Self::LowMargin { margin, min } => write!(f, "low margin {margin} < {min}"),
             Self::NoCandidates => f.write_str("no candidates"),
             Self::NotConverged => f.write_str("not converged"),
-            Self::Confusable => f.write_str("confusable control word"),
+            Self::Confusable => f.write_str("confusable token matched a guarded term"),
         }
     }
 }

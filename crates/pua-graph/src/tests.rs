@@ -164,3 +164,14 @@ fn per_node_colours_and_accessors() {
     h.add_edge(b, b, Edge::directed()).unwrap();
     assert_ne!(fp(&g), fp(&h));
 }
+
+#[test]
+fn label_of_is_stable_and_length_prefixed() {
+    let a = label_of(&[b"fs.read"]);
+    assert_eq!(a, label_of(&[b"fs.read"]));
+    assert_ne!(a, label_of(&[b"fs.write"]));
+    assert_ne!(a, 0);
+    assert_ne!(label_of(&[]), label_of(&[b""]));
+    assert_ne!(label_of(&[b"ab", b"c"]), label_of(&[b"a", b"bc"]));
+    assert_ne!(label_of(&[b"x"]), u64::MAX);
+}
