@@ -68,7 +68,7 @@ pub fn layout_fingerprint(record: &FormRecord<'_>) -> [u8; 32] {
     }
     // Complete graph on field-key nodes: edge set depends only on the key set (already sorted).
     for i in 0..nodes.len() {
-        for j in (i + 1)..nodes.len() {
+        for j in i.saturating_add(1)..nodes.len() {
             let _ = g.add_edge(nodes[i], nodes[j], Edge::undirected());
         }
     }

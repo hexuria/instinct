@@ -112,11 +112,11 @@ pub fn suggest_tin(field: &str) -> Result<Suggestion, TinError> {
         OcrError::NotNumeric { at, ch } => TinError::NotNumeric { at, ch },
     })?;
     let mut reason = String::from("format suggestion");
-    if sep_count > 0 {
+    if sep_count != 0 {
         reason.push_str(": stripped separators");
     }
     if !repaired.repairs().is_empty() {
-        if sep_count > 0 {
+        if sep_count != 0 {
             reason.push_str(" and");
         } else {
             reason.push(':');
