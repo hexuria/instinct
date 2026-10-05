@@ -14,7 +14,8 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | 1 | [#2](https://github.com/hexuria/pua/pull/2) | `plan` | `main` | T1 plan + review, ADR 0001 | open |
 | 2 | [#3](https://github.com/hexuria/pua/pull/3) | `core` | `plan` | T2 pua-core, ADRs 0002-0003 | open, CI green |
 | 3 | [#4](https://github.com/hexuria/pua/pull/4) | `explain` | `core` | T3 pua-explain (replay) | open, CI green |
-| 4 | #5 | `text` | `explain` | T4 pua-text, ADR 0006, fuzz crate + `normalize` target | open |
+| 4 | [#5](https://github.com/hexuria/pua/pull/5) | `text` | `explain` | T4 pua-text, ADR 0006, fuzz crate + `normalize` target | open |
+| 5 | #6 | `lexicon` | `text` | T5 pua-lexicon, fuzz `lexicon_lookup` | open |
 
 ## Done
 
@@ -29,9 +30,14 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
   confusables). 20 tests incl. differential NFC proptest and move-sequence invariance; 20k-case
   local stress run green. Fuzz target `normalize`: 329,871 runs / 46 s, no crash.
 
+- T5: pua-lexicon (validated vocabulary, longest exact, opt-in substring, SymSpell repair with
+  QWERTY/transposition/lexical tie-break, guards, confusable flags, OCR digit table). 25 tests
+  incl. 5 proptests (invariance, entry-order independence, SymSpell == brute force); 20k-case
+  stress green. Fuzz `lexicon_lookup`: 306,060 runs / 41 s, no crash.
+
 ## Next
 
-- T5 pua-lexicon, T6 pua-rules, T7 pua-hdc, T8 pua-graph, T9 pua-jev, then packs T10-T14.
+- T6 pua-rules, T7 pua-hdc, T8 pua-graph, T9 pua-jev, then packs T10-T14.
 
 ## Known constraints
 

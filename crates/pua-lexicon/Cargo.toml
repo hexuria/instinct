@@ -8,5 +8,20 @@ license.workspace = true
 repository.workspace = true
 publish.workspace = true
 
+[features]
+default = []
+## Deserialize `LexiconSpec` from pack data (TOML/JSON). Validation still happens in `Lexicon::new`.
+serde = ["dep:serde", "pua-core/serde"]
+
+[dependencies]
+pua-core.workspace = true
+pua-text.workspace = true
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+proptest.workspace = true
+unicode-normalization.workspace = true
+toml.workspace = true
+
 [lints]
 workspace = true
