@@ -613,3 +613,20 @@ fn fingerprint_tracks_every_field_and_ignores_order() {
     let slots = set(&with(|s| s.rules[3].pattern = "switch to {gerund}".into()));
     assert_ne!(slots.fingerprint(), a.fingerprint());
 }
+
+#[test]
+fn mutants_survivors_pinned() {
+    // The rule set reports the config it was built with.
+    let ascii = NormalizeConfig {
+        fold: pua_text::Fold::AsciiLower,
+        ..NormalizeConfig::default()
+    };
+    assert_eq!(RuleSet::new(&base(), ascii).unwrap().config(), ascii);
+    // A negator phrase that overlaps the cue does not precede it, so it doesn't negate.
+    let rs = set(&with(|s| s.negators.push("please stop".into())));
+    assert_eq!(scores(&rs, "please stop"), [700, 0, 0]);
+    assert_eq!(scores(&rs, "please stop stop"), [700, 0, 0]);
+    // The `?` position is checked against protected spans at its own offset.
+    let rs = set(&base());
+    assert_eq!(scores(&rs, "stop `abcdefgh`x !!!!?"), [350, 0, 0]);
+}
