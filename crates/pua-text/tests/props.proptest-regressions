@@ -1,0 +1,10 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 406a773206ea87af40af1deecd1d4e947f3392bee8a8ab27b6839c735d041a6f # shrinks to x = "\"\"ףּ", a = 0, b = 0, cfg = NormalizeConfig { fold: UnicodeLower, punct_runs: Keep }
+cc b79127d6919cbb3028eeea626db6355b11afa8a68730fdd8763a07e79b1ba2bf # shrinks to x = "PEÑAstop", mv = [(Nfd, 0), (ToggleCase, 5211241930889730746)], cfg = NormalizeConfig { fold: AsciiLower, punct_runs: Keep }
+cc 890d50a538cfd11175020a80e7a0c323cfd514d02bacbde7329af58ca6ef3abb # shrinks to x = " ! \u{119da}", a = 0, b = 0, cfg = NormalizeConfig { fold: UnicodeLower, punct_runs: Keep }
+cc 68fb4dfa6f2903fdf30dfa42b76d4e99ce9a39de843c1baaf37bf11eda881921 # shrinks to x = "!v1.2", mv = [(ToggleCase, 0)], cfg = NormalizeConfig { fold: UnicodeLower, punct_runs: Keep }

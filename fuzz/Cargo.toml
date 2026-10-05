@@ -1,0 +1,25 @@
+# cargo-fuzz targets (nightly, dated: see $NIGHTLY in .github/workflows/nightly.yml).
+# Not a workspace member: it needs nightly and libfuzzer-sys. Run: scripts/fuzz-smoke.sh 60
+[package]
+name = "pua-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "MIT"
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+members = ["."]
+
+[dependencies]
+libfuzzer-sys = "0.4"
+pua-text = { path = "../crates/pua-text" }
+
+[[bin]]
+name = "normalize"
+path = "fuzz_targets/normalize.rs"
+test = false
+doc = false
+bench = false
