@@ -101,6 +101,15 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 - Phase 1 architecture audit (docs only): [docs/architecture-audit.md](architecture-audit.md). Proposes the engine/consumer split; destructive steps B1–B8 await owner approval.
 
 
+## Phase 2: engine / consumer split (docs/architecture-audit.md)
+
+Owner approved on 2026-10-05: packs move to their consumers, `pua-jev` moves to opengrok-server,
+HDC stays unwired, three profile presets only.
+
+| Step | PR | Scope | Status |
+|---|---|---|---|
+| A1 | this PR | `pua-rules::RuleClassifier` extracted from `Autosteer::pipeline`; `delivery` fixture + golden journal replay byte-identical | open |
+
 ## Known constraints
 
 - The box's GitHub token lacks the `workflow` scope; workflow file changes are pushed from the
