@@ -1,0 +1,13 @@
+# cargo-mutants config (skill §2 "Logic" chaos layer). Survivor triage: docs/verification.md.
+additional_cargo_args = ["--all-features"]
+test_tool = "nextest"
+# Pure re-exports, Debug/Display boilerplate for error types are not decision logic.
+exclude_re = [
+    "impl fmt::Debug",
+    "impl std::error::Error",
+    # Equivalent mutants, each argued in docs/verification.md "Equivalent mutants".
+    "replace < with <= in (Millis|Confidence)::saturating",
+    "replace > with >= in (Millis|Confidence)::saturating",
+    "replace < with <= in is_canonical",
+    "replace \\| with \\^ in DataVersion::from_hex",
+]
