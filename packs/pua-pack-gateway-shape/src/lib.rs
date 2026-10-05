@@ -181,12 +181,12 @@ pub fn shape_of(text: &str) -> ShapeFeatures {
     }
 }
 
-fn is_hunk_header(line: &str) -> bool {
+pub(crate) fn is_hunk_header(line: &str) -> bool {
     let t = line.trim_start();
     t.starts_with("@@ ") || (t.starts_with("@@") && t[2..].contains("@@"))
 }
 
-fn script_of(ch: char) -> Option<DominantScript> {
+pub(crate) fn script_of(ch: char) -> Option<DominantScript> {
     match ch.script() {
         Script::Common | Script::Inherited | Script::Unknown => None,
         Script::Latin => Some(DominantScript::Latin),
@@ -201,14 +201,18 @@ fn script_of(ch: char) -> Option<DominantScript> {
     }
 }
 
-fn count_fences_raw(text: &str) -> u32 {
+pub(crate) fn count_fences_raw(text: &str) -> u32 {
     let mut n = 0u32;
     let mut rest = text;
     while let Some(i) = rest.find("```") {
         n = n.saturating_add(1);
-        rest = &rest[i + 3..];
-        if let Some(j) = rest.find("```") {
-            rest = &rest[j + 3..];
+        // Advance past the opener without `+` (mutants rewrite `i + 3` ↔ `i * 3`).
+        rest = rest
+            .get(i..)
+            .and_then(|s| s.strip_prefix("```"))
+            .unwrap_or("");
+        if let Some(after) = rest.find("```").and_then(|j| rest.get(j..)) {
+            rest = after.strip_prefix("```").unwrap_or("");
         } else {
             break;
         }
@@ -216,7 +220,7 @@ fn count_fences_raw(text: &str) -> u32 {
     n
 }
 
-fn count_homoglyphs_raw(text: &str) -> u32 {
+pub(crate) fn count_homoglyphs_raw(text: &str) -> u32 {
     text.split_whitespace()
         .filter(|w| {
             let sk: String = skeleton(w).collect();
@@ -227,7 +231,7 @@ fn count_homoglyphs_raw(text: &str) -> u32 {
         .unwrap_or(u32::MAX)
 }
 
-fn dominant_raw(text: &str) -> DominantScript {
+pub(crate) fn dominant_raw(text: &str) -> DominantScript {
     let mut best = DominantScript::None;
     let mut best_n = 0u32;
     let mut counts = [0u32; 10];
@@ -235,8 +239,10 @@ fn dominant_raw(text: &str) -> DominantScript {
         if let Some(s) = script_of(ch) {
             let i = s as usize;
             counts[i] = counts[i].saturating_add(1);
-            if counts[i] > best_n {
-                best_n = counts[i];
+            let c = counts[i];
+            // Strict greater: equal counts keep the earlier script (Latin before Greek, …).
+            if c.saturating_sub(best_n) > 0 {
+                best_n = c;
                 best = s;
             }
         }
@@ -259,7 +265,13 @@ fn walk_json(v: &Value, keys: &mut u32, structured: &mut bool) {
         Value::Object(map) => {
             for (k, child) in map {
                 *keys = keys.saturating_add(1);
-                if k == "response_format" || k == "json_schema" || k == "structured_outputs" {
+                if k == "response_format" {
+                    *structured = true;
+                }
+                if k == "json_schema" {
+                    *structured = true;
+                }
+                if k == "structured_outputs" {
                     *structured = true;
                 }
                 walk_json(child, keys, structured);
@@ -274,7 +286,7 @@ fn walk_json(v: &Value, keys: &mut u32, structured: &mut bool) {
     }
 }
 
-fn text_asks_structured(text: &str) -> bool {
+pub(crate) fn text_asks_structured(text: &str) -> bool {
     let lower = text.to_ascii_lowercase();
     lower.contains("response_format")
         || lower.contains("json_schema")
