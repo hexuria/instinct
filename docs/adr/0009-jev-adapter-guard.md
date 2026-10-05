@@ -1,6 +1,7 @@
 # ADR 0009: Jev adapter trusts labels, converts floats once, and labels every fallback
 
-- Status: accepted
+- Status: accepted; **moved with the code** to hexuria/opengrok-server `crates/opengrok-jev`
+  (ADR 0010). PUA no longer has a float boundary at all.
 - Date: 2026-10-05
 - Task: T9 (`pua-jev`)
 

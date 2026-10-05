@@ -1,5 +1,11 @@
 # PUA build plan
 
+> **Historical (T1–T17).** This plan built the engine *and* the domain packs. Phase 2 moved the
+> packs and `pua-jev` to their consumers (ADR 0010, [architecture-audit.md](architecture-audit.md));
+> task rows that name a pack describe work that now lives in those repos. ADRs 0004 and 0007 were
+> planned here but never written: their decisions are recorded inline (data via `include_str!` + TOML
+> parsed at load; owner defaults q5/q8/q14/q15) and, for the packs, travelled with the code.
+
 Source of truth: docs/spec.md (semantics) and the impeccable-rust checklist (quality bar, see
 CONTRIBUTING.md). This plan orders the work, gives every task acceptance criteria, assigns every
 failure mode one owner, and lists the decisions that get an ADR. Status lives in docs/progress.md.
@@ -30,7 +36,7 @@ nextest, doc, deny, architecture) → push → CI green → fix → next. One st
 |---|---|---|---|
 | T0 | CI first | repo | PR gate, nightly, bench, release, deny, architecture, Dependabot, CODEOWNERS, AGENTS/CONTRIBUTING merged before code. **Done in PR #1.** |
 | T1 | This plan + plan review | docs | Plan reviewed against spec and skill; gaps listed and fixed below. |
-| T2 | Core types + decide | `pua-core` | `Millis`, `Confidence`, `Span`, `DataVersion` (+ builder, domain-separated blake3), `Question` (validated Noul/Choice/Score), `Answer`, `Ranked`, `AbstainReason`, `Profile` table (§4.6), `Trail`/`TrailRecord`/`StageKind`/`ScorerKind`, `Decision`, `Pack` trait, `decide_choice` and `rank_candidates`. Proptests: determinism, candidate permutation invariance, option relabeling equivariance when the top-2 margin ≠ 0, option 0 wins exact ties, abstain iff below threshold/margin. Exact `Err` tests for every constructor. |
+| T2 | Core types + decide | `pua-core` | `Millis`, `Confidence`, `Span`, `DataVersion` (+ builder, domain-separated blake3), `Question` (validated Noul/Choice/Score), `Answer`, `Ranked`, `AbstainReason`, `Profile` table (§4.6), `Trail`/`TrailRecord`/`StageKind`/`ScorerKind`, `Decision`, `Pack` trait, `decide` and `rank_candidates` (Phase 2: `Pack` and `rank_candidates` removed; `CandidateSet` added). Proptests: determinism, candidate permutation invariance, option relabeling equivariance when the top-2 margin ≠ 0, option 0 wins exact ties, abstain iff below threshold/margin. Exact `Err` tests for every constructor. |
 | T3 | Replay + explain | `pua-explain` | `ReplayRecord<I>` (schema version, input hash, inputs, profile, decision), canonical JSON (serde, no maps), `diff` (answer / DataVersion / trail changes), text rendering of a trail. Golden test: serialize → bytes are stable across runs and equal to a committed fixture; round-trip property. |
 | T4 | Canonicalization with offset map | `pua-text` | NFC (chunked at stable starters, differential-tested against whole-string NFC), `Fold::{AsciiLower, UnicodeLower}` (Ñ-preserving), whitespace collapse and optional punctuation-run collapse outside protected spans, offset map (every canonical range maps to an original range), protected spans (fenced/inline code, URLs, paths, double-quoted text, versions/decimals), tokens and sentences as spans, confusable flags + skeleton. Proptests: `normalize(move(x)) == normalize(x)` for every elementary move; protected-span equivariance; span equivariance `fold(x'[s']) == fold(x[s])`; offset map monotone and in bounds; never panics on arbitrary input. Unicode fixtures `PEÑA`, `Ñiño`, combining vs precomposed Ñ, Cyrillic `ѕtop`. Fuzz target `normalize`. |
 | T5 | Lexicon | `pua-lexicon` | Validated `Lexicon` (no empty/duplicate/non-canonical terms, substring opt-in refused under 5 chars, ≤ 3 tokens); token-boundary exact, longest match across ≤ 3 tokens; typo repair for closed vocab (distance 1 for ≤ 4 chars, 2 otherwise; tie-break QWERTY adjacency → transposition → lexical; guard words never repaired; fixed penalty); OCR digit confusions for numeric fields only. Proptests: candidate multiset invariant under text moves; repair is deterministic and symmetric in insertion order of entries; never repairs inside protected spans. Exact `Err` tests. |
@@ -96,10 +102,10 @@ it must execute the golden replay journals.
 | 0001 | CI-first, instruction-count bench gate, mutants non-blocking until baseline triaged; workflow files pushed via the owner's credentials because the box token lacks `workflow` scope |
 | 0002 | Separate `Millis` (similarity −1000..=1000) and `Confidence` (0..=1000) newtypes instead of one `Millis` for both (spec §4.1 deviation) |
 | 0003 | Trail types live in `pua-core` (Pack returns Decision); `pua-explain` owns replay, diff and rendering; spec's `Stage`/`CandidateGen`/`Scorer` traits deferred until a second implementation exists |
-| 0004 | Pack data: TOML via `include_str!` parsed at load into validated tables; build.rs codegen discarded |
+| 0004 (not written) | Pack data: TOML via `include_str!` parsed at load into validated tables; build.rs codegen discarded |
 | 0005 | Rules match on tokens (sorted token index) instead of a byte-level Aho-Corasick automaton: token-boundary semantics by construction |
 | 0006 | NFC by chunking at stable starters with a differential oracle; fold is `char::to_lowercase` (Unicode version pinned by the 1.99.0 toolchain and recorded in `DataVersion`) |
-| 0007 | Owner-decision defaults (q14, q15, q8, q5): case and punctuation runs are symmetries for autosteer; label diacritics are NOT folded in ocr-labels; WL `h = 3`; sample catalogs only; no TIN checksum |
+| 0007 (not written) | Owner-decision defaults (q14, q15, q8, q5): case and punctuation runs are symmetries for autosteer; label diacritics are NOT folded in ocr-labels; WL `h = 3`; sample catalogs only; no TIN checksum |
 | 0008 | Interrupt never auto-applies, expressed as a type (`AutoApply`) |
 | 0009 | Jev adapter: one float boundary (`convert.rs`), score levels matched by label not rung, off-menu guard on labels and probability keys, noul drift check, labelled fallback (`FallbackWhy`) |
 
@@ -128,7 +134,7 @@ Reviewed against docs/spec.md (§3–§13) and the skill checklist. Gaps found a
    fails if unsafe appears, so the skip cannot silently go stale.
 8. **Missing fuzz targets for parsers.** Added T16 (TOML-fed lexicon/rules, Jev reply JSON, graph).
 9. **Open questions** (q5 TIN checksum, q8 licensed lists, q13 Jev input, q14 case/diacritics,
-   q15 WL rounds) get the safe path in ADR 0007, not a guess.
+   q15 WL rounds) get the safe recorded default (owner decisions, see the note at the top), not a guess.
 10. **Target selection** is spec'd to wait for PRD Phase B. Fixed: behind an off-by-default
     feature so `standard` consumers cannot accidentally depend on it.
 11. **CI permissions.** The box's GitHub token cannot write `.github/workflows`. Workflow changes
