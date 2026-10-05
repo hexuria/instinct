@@ -11,6 +11,8 @@ fn chooses_by_description_overlap() {
     let d = select("please write the file now", &tools, Profile::Deep);
     assert_eq!(d.answer().chosen(), Some(OptionIndex::new(1)));
     assert_eq!(chosen_id(&d, &tools).unwrap().as_str(), "fs.write");
+    let texts: Vec<&str> = d.trail().records().iter().map(|r| r.text()).collect();
+    assert_eq!(texts, ["fs.read → 250", "fs.write → 666", "chose fs.write"]);
 }
 
 #[test]
