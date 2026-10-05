@@ -1,12 +1,22 @@
 [package]
 name = "pua-pack-tool-selection"
-description = "PUA (Predictable Universal Advisor): tool selection pack: choice over a tool catalog using WL and Hamming similarity."
+description = "PUA (Predictable Universal Advisor): tool-selection pack — Choice over tools or Abstain."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 publish.workspace = true
+
+[dependencies]
+pua-core = { workspace = true, features = ["serde"] }
+pua-text.workspace = true
+pua-graph.workspace = true
+serde.workspace = true
+blake3.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
 
 [lints]
 workspace = true

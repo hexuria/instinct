@@ -282,6 +282,14 @@ dependencies = [
 [[package]]
 name = "pua-pack-tool-selection"
 version = "0.0.0"
+dependencies = [
+ "blake3",
+ "proptest",
+ "pua-core",
+ "pua-graph",
+ "pua-text",
+ "serde",
+]
 
 [[package]]
 name = "pua-rules"
