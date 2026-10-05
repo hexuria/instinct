@@ -240,6 +240,17 @@ dependencies = [
 [[package]]
 name = "pua-pack-bir-fields"
 version = "0.0.0"
+dependencies = [
+ "blake3",
+ "proptest",
+ "pua-core",
+ "pua-graph",
+ "pua-lexicon",
+ "pua-text",
+ "serde",
+ "toml",
+ "unicode-normalization",
+]
 
 [[package]]
 name = "pua-pack-gateway-shape"
