@@ -187,6 +187,10 @@ version = "0.0.0"
 [[package]]
 name = "pua-hdc"
 version = "0.0.0"
+dependencies = [
+ "proptest",
+ "pua-core",
+]
 
 [[package]]
 name = "pua-jev"
