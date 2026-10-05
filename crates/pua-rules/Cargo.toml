@@ -8,5 +8,21 @@ license.workspace = true
 repository.workspace = true
 publish.workspace = true
 
+[features]
+default = []
+## Deserialize `RuleSetSpec` from pack data (TOML/JSON). Validation still happens in `RuleSet::new`.
+serde = ["dep:serde", "pua-core/serde", "pua-lexicon/serde"]
+
+[dependencies]
+pua-core.workspace = true
+pua-lexicon.workspace = true
+pua-text.workspace = true
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+proptest.workspace = true
+unicode-normalization.workspace = true
+toml.workspace = true
+
 [lints]
 workspace = true

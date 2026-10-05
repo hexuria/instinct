@@ -227,6 +227,15 @@ version = "0.0.0"
 [[package]]
 name = "pua-rules"
 version = "0.0.0"
+dependencies = [
+ "proptest",
+ "pua-core",
+ "pua-lexicon",
+ "pua-text",
+ "serde",
+ "toml",
+ "unicode-normalization",
+]
 
 [[package]]
 name = "pua-text"

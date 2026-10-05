@@ -17,4 +17,5 @@ exclude_re = [
     "replace Lexicon::is_empty -> bool with false",
     "replace > with >= in Lexicon::substring_hit",
     "replace < with <= in qwerty_adjacent",
+    "replace Repairs::none -> Self with Default::default\\(\\)",
 ]

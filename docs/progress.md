@@ -15,7 +15,8 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | 2 | [#3](https://github.com/hexuria/pua/pull/3) | `core` | `plan` | T2 pua-core, ADRs 0002-0003 | open, CI green |
 | 3 | [#4](https://github.com/hexuria/pua/pull/4) | `explain` | `core` | T3 pua-explain (replay) | open, CI green |
 | 4 | [#5](https://github.com/hexuria/pua/pull/5) | `text` | `explain` | T4 pua-text, ADR 0006, fuzz crate + `normalize` target | open |
-| 5 | #6 | `lexicon` | `text` | T5 pua-lexicon, fuzz `lexicon_lookup` | open |
+| 5 | [#6](https://github.com/hexuria/pua/pull/6) | `lexicon` | `text` | T5 pua-lexicon, fuzz `lexicon_lookup` | open |
+| 6 | #7 | `rules` | `lexicon` | T6 pua-rules, ADR 0005, fuzz `rules_match` | open |
 
 ## Done
 
@@ -35,9 +36,15 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
   incl. 5 proptests (invariance, entry-order independence, SymSpell == brute force); 20k-case
   stress green. Fuzz `lexicon_lookup`: 306,060 runs / 41 s, no crash.
 
+- T6: pua-rules (validated rule sets, token-keyed matching per ADR 0005, specificity
+  suppression for object scope, negation window, question damper, repairs with penalty,
+  Max/Sum). 21 tests incl. 5 proptests (invariance, protected cues inert, sentence locality,
+  spec-order independence, no panics); 20k-case stress green. Fuzz `rules_match`: 307,525 runs
+  / 41 s, no crash.
+
 ## Next
 
-- T6 pua-rules, T7 pua-hdc, T8 pua-graph, T9 pua-jev, then packs T10-T14.
+- T7 pua-hdc, T8 pua-graph, T9 pua-jev, then packs T10-T14.
 
 ## Known constraints
 
