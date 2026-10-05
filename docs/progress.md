@@ -114,7 +114,7 @@ HDC stays unwired, three profile presets only.
 | H2 | [open-ai-gateway#149](https://github.com/hexuria/open-ai-gateway/pull/149) | `pua-gateway` → `crates/oag-shape` (`oag-shape/1`) | draft, owner review |
 | H3 | [buwiz-forms#67](https://github.com/hexuria/buwiz-forms/pull/67) | `pua-bir` → `crates/bir-suggest` (+ OCR digit table), `pua-ocr` → `crates/bir-cor-extract` | draft, owner review |
 | H4 | [opengrok-server#370](https://github.com/hexuria/opengrok-server/pull/370) | `pua-jev` → `crates/opengrok-jev` (standalone workspace on 1.99.0; opengrok pins 1.95) | draft, owner review |
-| B1–B8 | B PR (`refactor/remove-packs`) | remove `packs/`, `pua-jev`, `pua_lexicon::ocr`, jev fuzz target, autosteer eval/goldens; workspace, CODEOWNERS, architecture.txt, mutants, repo rules; neutral engine docs; README/spec rewrite; ADR 0010; audit §11 | see audit §11 |
+| B1–B8 | [#23](https://github.com/hexuria/pua/pull/23) | remove `packs/`, `pua-jev`, `pua_lexicon::ocr`, jev fuzz target, autosteer eval/goldens; workspace, CODEOWNERS, architecture.txt, mutants, repo rules; neutral engine docs; README/spec rewrite; ADR 0010; audit §11 | see audit §11 |
 
 ## Known constraints
 
