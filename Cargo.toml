@@ -26,7 +26,28 @@ repository = "https://github.com/hexuria/pua"
 publish = false
 
 [workspace.dependencies]
-# Internal crates (path deps added when code lands).
+# Internal crates.
+pua-core = { path = "crates/pua-core" }
+pua-text = { path = "crates/pua-text" }
+pua-lexicon = { path = "crates/pua-lexicon" }
+pua-rules = { path = "crates/pua-rules" }
+pua-hdc = { path = "crates/pua-hdc" }
+pua-graph = { path = "crates/pua-graph" }
+pua-explain = { path = "crates/pua-explain" }
+pua-jev = { path = "crates/pua-jev" }
+
+# External (permissive only; spec §3.1 candidate list). `pure` keeps blake3 free of C/asm builds.
+blake3 = { version = "1.8.7", default-features = false, features = ["pure"] }
+serde = { version = "1.0.228", default-features = false, features = ["std", "derive"] }
+serde_json = { version = "1.0.145", default-features = false, features = ["std"] }
+toml = { version = "1.0", default-features = false, features = ["parse", "serde"] }
+unicode-normalization = { version = "0.1.25", default-features = false, features = ["std"] }
+unicode-segmentation = "1.13"
+unicode-security = "0.1.2"
+unicode-script = "0.5"
+
+# Dev-only.
+proptest = { version = "1.11", default-features = false, features = ["std", "bit-set"] }
 
 # Lints are part of the quality bar (docs/plan.md, AGENTS.md). CI runs clippy with -D warnings,
 # so every "warn" below is a hard failure in CI while staying friendly during local iteration.
