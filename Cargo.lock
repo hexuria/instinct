@@ -183,6 +183,11 @@ dependencies = [
 [[package]]
 name = "pua-graph"
 version = "0.0.0"
+dependencies = [
+ "blake3",
+ "proptest",
+ "pua-core",
+]
 
 [[package]]
 name = "pua-hdc"
