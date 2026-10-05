@@ -3,6 +3,7 @@
     missing_docs,
     unused_qualifications,
     clippy::unwrap_used,
+    clippy::expect_used,
     clippy::print_stdout
 )]
 
