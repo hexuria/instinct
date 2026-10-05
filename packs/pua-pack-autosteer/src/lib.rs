@@ -119,26 +119,24 @@ impl Autosteer {
             toml::from_str(rules_toml).map_err(|e| PackError::Rules(e.to_string()))?;
         let rules =
             RuleSet::new(&rule_spec, config).map_err(|e| PackError::Rules(e.to_string()))?;
-        let expected = ["queue", "steer", "interrupt"];
-        if rules.class_count() != expected.len()
-            || expected
-                .iter()
-                .enumerate()
-                .any(|(i, n)| rules.class_id(n).map(pua_rules::ClassId::index) != Some(i))
-        {
-            let mut got = Vec::with_capacity(rules.class_count());
-            for name in expected {
-                if let Some(c) = rules.class_id(name) {
-                    while got.len() < c.index() {
-                        got.push(format!("?{}", got.len()));
-                    }
-                    got.push((*name).to_owned());
+        // Classes must be exactly [queue, steer, interrupt] in that order: option indices
+        // are hard-wired to those names.
+        for (name, want) in [("queue", 0usize), ("steer", 1), ("interrupt", 2)] {
+            match rules.class_id(name) {
+                Some(c) if c.index() == want => {}
+                _ => {
+                    return Err(PackError::ClassOrder(vec![format!(
+                        "want {name} at {want}, class_count={}",
+                        rules.class_count()
+                    )]));
                 }
             }
-            while got.len() < rules.class_count() {
-                got.push(format!("?{}", got.len()));
-            }
-            return Err(PackError::ClassOrder(got));
+        }
+        if rules.class_count() != 3 {
+            return Err(PackError::ClassOrder(vec![format!(
+                "class_count={}",
+                rules.class_count()
+            )]));
         }
         let question = Question::choice("delivery", &["queue", "steer", "interrupt"])
             .map_err(|e| PackError::Rules(e.to_string()))?;

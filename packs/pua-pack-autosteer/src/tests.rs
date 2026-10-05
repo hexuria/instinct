@@ -202,4 +202,55 @@ fn pack_error_texts_are_distinct() {
     assert_ne!(b, c);
 }
 
+use crate::data::{LEXICON_TOML, RULES_TOML};
 use crate::input::LiveRun;
+
+#[test]
+fn class_order_is_pinned() {
+    // Swap the first two class declarations: names still resolve, but indices are wrong.
+    let bad = RULES_TOML
+        .replacen("name = \"queue\"", "name = \"__tmp__\"", 1)
+        .replacen("name = \"steer\"", "name = \"queue\"", 1)
+        .replacen("name = \"__tmp__\"", "name = \"steer\"", 1);
+    assert!(
+        matches!(
+            Autosteer::from_toml(LEXICON_TOML, &bad).unwrap_err(),
+            PackError::ClassOrder(_)
+        ),
+        "{bad}"
+    );
+    // Only two classes.
+    let two = r#"
+negators = ["don't"]
+[[classes]]
+name = "queue"
+scorer = "max"
+[[classes]]
+name = "steer"
+scorer = "max"
+[[rules]]
+id = "queue.also.v1"
+class = "queue"
+pattern = "also"
+weight_millis = 800
+forbids = ["negation"]
+version = 1
+"#;
+    assert!(matches!(
+        Autosteer::from_toml(LEXICON_TOML, two).unwrap_err(),
+        PackError::ClassOrder(_)
+    ));
+}
+
+#[test]
+fn input_accessors() {
+    let runs = vec![LiveRun {
+        id: "1".into(),
+        label: "a".into(),
+    }];
+    let input = Input::with_runs("hello", runs.clone());
+    assert_eq!(input.text(), "hello");
+    assert_eq!(input.as_str(), "hello");
+    assert_eq!(input.live_runs(), runs.as_slice());
+    assert_eq!(Input::message("x").live_runs(), &[]);
+}

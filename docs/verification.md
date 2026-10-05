@@ -40,6 +40,7 @@ either killed by a new test or listed below as equivalent, with the reason.
 | pua-hdc (local run, T7) | 19 in `Codebook::decode` (subtraction estimate, tie order, inclusive floor), `best_two` runner-up, `Encoder::version`, resonator fixed-point `&&` | `src/tests.rs::decode_subtracts_the_estimated_contribution`, `decode_ties_and_inclusive_floor`, `nearest_margin_is_top_minus_runner_up`, `resonator_iteration_counts_are_pinned`, `decode_estimate_is_exact_for_integer_weights` (both rounding branches; the earlier tests left residuals that score ±1000 by identity), `resonator_needs_both_estimates_unchanged` (single-entry `A`) |
 | pua-graph (local run, T8) | `refine_with` fixed-round counter `+=` → `*=` | `src/tests.rs::rounds_and_stability` (`Fixed(7).rounds() == 7`) |
 | pua-jev (local run, T9) | `AskedChoice::label`, `ConvertError` Display | `src/tests.rs::wire_choice_labels_and_convert_texts` |
+| pua-pack-autosteer (CI mutants-diff on #11, then local) | `from_toml` class-order gate; `Input::{as_str,live_runs}` | `src/tests.rs::{class_order_is_pinned,input_accessors}` |
 | pua-core (CI mutants-diff on #3) | `is_canonical` `>` → `>=`; `Span::contains` `&&` → `\|\|`; `Span::overlaps` `<` → `<=`; `Trail::is_empty` → `true` | same test (Ranked tie order, span relations); `trail::tests` |
 
 Text mutants run (T4, local, after the tests above): 216 mutants, 0 missed (15 timeouts are
@@ -61,3 +62,5 @@ Graph mutants run (T8, local, `--all-features`): 51 mutants, 43 caught, 7 unviab
 (`bfs` `==` → `!=` never terminates), 0 missed.
 
 Jev mutants run (T9, local): 46 mutants, 38 caught, 8 unviable, 0 missed.
+
+Autosteer mutants run (T10, local, after CI survivors): 0 missed.
