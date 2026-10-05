@@ -1,6 +1,10 @@
 //! Property tests for spec §5.1 at the core level: determinism, candidate permutation
 //! invariance, option relabeling equivariance away from ties, option-0 tie-break, abstain rules.
-#![allow(clippy::unwrap_used, clippy::expect_used)] // tests may unwrap (AGENTS.md rule 4)
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::many_single_char_names
+)] // tests may unwrap (AGENTS.md rule 4)
 
 use proptest::prelude::*;
 use pua_core::{
@@ -134,4 +138,59 @@ proptest! {
             prop_assert!(confidence >= t.min_confidence && margin >= t.min_margin);
         }
     }
+}
+
+#[test]
+fn exact_boundaries_and_conversions() {
+    use pua_core::{DataVersion, Decision, Millis, Options, Trail};
+    let c = |v| Confidence::new(v).unwrap();
+    // saturating_add must add, not clamp something else.
+    assert_eq!(c(100).saturating_add(c(200)), c(300));
+    assert_eq!(c(500).saturating_sub(c(200)), c(300));
+    assert_eq!(i16::from(c(321)), 321);
+    assert_eq!(i16::from(Millis::new(-321).unwrap()), -321);
+    assert_eq!(Confidence::try_from(5i16), Ok(c(5)));
+    assert_eq!(Millis::try_from(-5i16).unwrap().get(), -5);
+    assert_eq!(Millis::new(-12).unwrap().to_string(), "-12");
+    assert_eq!(c(12).to_string(), "12");
+    // Candidate thresholds are inclusive minimums, exactly like decide.
+    let id = |s: &str| CandidateId::new(s).unwrap();
+    let at_min = rank_candidates([(id("a"), c(750)), (id("b"), c(600))]).unwrap();
+    assert!(matches!(
+        at_min.pick(Profile::Standard),
+        CandidatePick::Picked { .. }
+    ));
+    let empty = rank_candidates([]).unwrap();
+    assert!(empty.is_empty() && empty.entries().is_empty());
+    assert!(!at_min.is_empty());
+    // Accessors return what was stored.
+    let q = question(2);
+    let o: &Options = q.options().unwrap();
+    assert_eq!(
+        o.labels().iter().map(|l| l.as_str()).collect::<Vec<_>>(),
+        ["opt0", "opt1"]
+    );
+    assert_eq!(String::from(o.labels()[1].clone()), "opt1");
+    assert_eq!(String::from(id("x")), "x");
+    assert_eq!(Vec::from(o.clone()).len(), 2);
+    let mut s = Scores::new(&q);
+    s.set(OptionIndex::new(1), c(900)).unwrap();
+    let mut t = Trail::new();
+    t.push(pua_core::TrailRecord::new(pua_core::StageKind::Decide, "x"));
+    let d = Decision::new(
+        decide(&s, Profile::Deep),
+        Profile::Deep,
+        DataVersion::builder("t").finish(),
+        t.clone(),
+    );
+    assert_eq!(d.profile(), Profile::Deep);
+    assert_eq!(d.trail(), &t);
+    let (a, p, _, tr) = d.clone().into_parts();
+    assert_eq!((&a, p, &tr), (d.answer(), Profile::Deep, &t));
+    if let Answer::Choice { ranked, .. } = a {
+        assert_eq!(Vec::from(ranked).len(), 2);
+    }
+    // 65535 options are allowed (upper bound inclusive).
+    let many: Vec<String> = (0..usize::from(u16::MAX)).map(|i| i.to_string()).collect();
+    assert_eq!(Options::new(&many).unwrap().len(), u16::MAX);
 }

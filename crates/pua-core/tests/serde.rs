@@ -1,6 +1,10 @@
 //! Serde round trips and validation on the way in (deserialization cannot bypass invariants).
 #![cfg(feature = "serde")]
-#![allow(clippy::unwrap_used, clippy::expect_used)] // tests may unwrap (AGENTS.md rule 4)
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::many_single_char_names
+)] // tests may unwrap (AGENTS.md rule 4)
 
 use pua_core::{
     Confidence, DataVersion, Decision, Millis, OptionIndex, Profile, Question, Scores, Span,
