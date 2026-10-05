@@ -13,3 +13,4 @@ to public types bumps MAJOR (MINOR while 0.x).
   profiles, trail, `Pack` trait.
 - `pua-explain`: replay records (schema 1), JSON lines, decision diff, trail rendering.
 - `pua-text`: canonicalization with original-span mapping (ADR 0006); cargo-fuzz crate.
+- `pua-lexicon`: closed-vocabulary matching with typo repair and the OCR digit table.
