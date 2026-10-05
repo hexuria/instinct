@@ -396,3 +396,46 @@ fn hit_token_ranges() {
     let found = lex.lookup(&n).unwrap();
     assert_eq!(found.hits()[0].tokens(), 1..3);
 }
+
+#[test]
+fn mutants_survivors_pinned() {
+    // EntryId values follow term order.
+    let lex = build(&[("stop", "i"), ("cancel", "c")]);
+    assert_eq!(lex.find("cancel").unwrap().get(), 0);
+    // The lexicon reports the config it was built with.
+    let ascii = NormalizeConfig {
+        fold: pua_text::Fold::AsciiLower,
+        ..NormalizeConfig::default()
+    };
+    let spec = spec(&[("stop", "i")]);
+    assert_eq!(Lexicon::new(&spec, ascii).unwrap().config(), ascii);
+    // Flags carry their own token index.
+    let n = normalize("ok \u{455}top", lex.config()).unwrap();
+    assert_eq!(lex.lookup(&n).unwrap().flags()[0].token(), 1);
+    // A protected token never extends a multi-token match.
+    let lex = build(&[("never mind", "i"), ("stop", "i")]);
+    assert_eq!(scan(&lex, "never `mind`"), []);
+    // Tokens up to longest single-token term + 2 chars are still repaired.
+    let lex = build(&[("stop", "i"), ("cancel", "c")]);
+    assert_eq!(
+        scan(&lex, "cancelxx"),
+        [("cancel".into(), "cancelxx".into(), rep(2))]
+    );
+    assert_eq!(scan(&lex, "cancelxxx"), []);
+}
+
+#[test]
+fn substring_tie_breaks() {
+    let sub = |terms: &[&str]| {
+        let mut s = spec(&terms.iter().map(|t| (*t, "x")).collect::<Vec<_>>());
+        for e in &mut s.entries {
+            e.substring = true;
+        }
+        s.repair = Repair::Off;
+        Lexicon::new(&s, NormalizeConfig::default()).unwrap()
+    };
+    // Longer term wins even when it sorts after the shorter one.
+    assert_eq!(scan(&sub(&["abcde", "bcdefg"]), "xabcdefgx")[0].0, "bcdefg");
+    // Equal length: lexical order.
+    assert_eq!(scan(&sub(&["bcdef", "abcde"]), "abcdefx")[0].0, "abcde");
+}
