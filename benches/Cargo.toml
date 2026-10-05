@@ -1,0 +1,27 @@
+[package]
+name = "pua-benches"
+description = "PUA Callgrind instruction-count benches (gungraun) for the §5.3 paths."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+pua-core = { workspace = true, features = ["serde"] }
+pua-text.workspace = true
+pua-hdc.workspace = true
+pua-graph.workspace = true
+pua-pack-autosteer.workspace = true
+pua-pack-gateway-shape.workspace = true
+
+[dev-dependencies]
+gungraun.workspace = true
+
+[[bench]]
+name = "paths"
+harness = false
+
+[lints]
+workspace = true
