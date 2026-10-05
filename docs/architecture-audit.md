@@ -520,7 +520,7 @@ Every handoff target accepted a PR, so nothing was parked on an `archive/packs-*
 | No floats, clocks, env, unordered maps, network | `clippy.toml`, `float_arithmetic` deny (no exception left, now that `pua-jev` is gone), `deny.toml`, `scripts/architecture.txt` |
 | Declared invariances | `pua-text`, `pua-rules` and `pua-lexicon` proptests. Each pack's generator-sequence proptests moved with it. |
 
-Test count: 235 at the Phase 1 baseline and 250 after #22. After the B PR there are 165 in PUA,
+Test count: 235 at the Phase 1 baseline and 250 after #22. After #23 there are 165 in PUA,
 because the pack tests now run in the consumer repos.
 
 ### Remaining debt
