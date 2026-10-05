@@ -45,7 +45,7 @@ use core::fmt;
 
 /// Tag folded into every colour and fingerprint (spec §4.8); part of `DataVersion`.
 pub const WL_TAG: &str = "wl-v1";
-/// Default fixed number of rounds (owner decision q15, ADR 0007).
+/// Default fixed number of rounds (owner decision q15: a fixed `h = 3` for portable fingerprints).
 pub const DEFAULT_ROUNDS: u8 = 3;
 
 /// A node handle into one [`LabeledGraph`].

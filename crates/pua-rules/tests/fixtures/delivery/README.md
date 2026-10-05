@@ -2,7 +2,9 @@
 
 A realistic, labelled data set the engine is regression-tested against. It is **example data**:
 the meaning of the options (`queue`, `steer`, `interrupt`) belongs to the consumer that ships it
-(NativeChat's autosteer module). PUA only checks that `RuleClassifier` decides it deterministically.
+(hexuria/nativechat `crates/autosteer`, which carries the same files). PUA only checks that
+`RuleClassifier` decides it deterministically. The domain tag `pua-steer/1` is kept so this journal
+and NativeChat's stay byte-identical at the same PUA rev.
 
 | File | What |
 |---|---|

@@ -29,7 +29,7 @@
 mod answer;
 mod candidate;
 mod decide;
-mod pack;
+mod decision;
 mod profile;
 mod question;
 mod score;
@@ -40,7 +40,7 @@ mod version;
 pub use answer::{AbstainReason, Answer, Ranked};
 pub use candidate::{CandidateError, CandidateId, CandidateSet, MAX_ID_BYTES};
 pub use decide::{Scores, ScoresError, abstain, decide};
-pub use pack::Decision;
+pub use decision::Decision;
 pub use profile::{Profile, Thresholds};
 pub use question::{Label, MAX_LABEL_BYTES, OptionIndex, Options, Question, QuestionError};
 pub use score::{Confidence, Millis, ScoreError};

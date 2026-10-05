@@ -23,7 +23,7 @@ impl fmt::Display for DataVersionError {
 
 impl std::error::Error for DataVersionError {}
 
-/// A 256-bit digest identifying pack data, seeds, tags, profile table and crate version.
+/// A 256-bit digest identifying consumer data, seeds, tags, profile table and crate version.
 /// Rendered as 64 lowercase hex characters.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -31,7 +31,7 @@ impl std::error::Error for DataVersionError {}
 pub struct DataVersion([u8; 32]);
 
 impl DataVersion {
-    /// Starts a builder. `domain` names what is being versioned (e.g. `"pua-steer"`).
+    /// Starts a builder. `domain` names what is being versioned (e.g. `"my-classifier/1"`).
     /// The `pua-core` crate version and the Unicode version of the toolchain are always folded in.
     pub fn builder(domain: &str) -> DataVersionBuilder {
         let mut b = DataVersionBuilder {

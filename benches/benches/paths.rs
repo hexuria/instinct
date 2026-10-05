@@ -11,11 +11,10 @@ use std::hint::black_box;
 
 use gungraun::{library_benchmark, library_benchmark_group, main};
 use pua_core::{Millis, Profile};
-use pua_gateway::shape_of;
 use pua_graph::{Edge, LabeledGraph, Rounds, wl_refine};
 use pua_hdc::{Codebook, D1024, Encoder, IterationCap, resonate};
-use pua_steer::{Autosteer, Input};
-use pua_text::{NormalizeConfig, normalize};
+use pua_rules::{ClassifierSpec, OnConfusable, RuleClassifier};
+use pua_text::{Fold, NormalizeConfig, PunctRuns, normalize};
 
 fn prose_32kib() -> String {
     // ~32 KiB of Latin prose with a couple of protected spans.
@@ -24,15 +23,30 @@ fn prose_32kib() -> String {
     unit.repeat(32_768 / unit.len() + 1)
 }
 
-fn autosteer_pack() -> Autosteer {
-    Autosteer::load().expect("embedded autosteer data")
+/// The engine's realistic regression fixture (`crates/pua-rules/tests/fixtures/delivery`).
+fn delivery_classifier() -> RuleClassifier {
+    const LEXICON: &str =
+        include_str!("../../crates/pua-rules/tests/fixtures/delivery/lexicon.toml");
+    const RULES: &str = include_str!("../../crates/pua-rules/tests/fixtures/delivery/rules.toml");
+    RuleClassifier::new(&ClassifierSpec {
+        domain: "pua-steer/1".into(),
+        question: "delivery".into(),
+        normalize: NormalizeConfig {
+            fold: Fold::UnicodeLower,
+            punct_runs: PunctRuns::Collapse,
+        },
+        lexicon: toml::from_str(LEXICON).expect("fixture lexicon"),
+        rules: toml::from_str(RULES).expect("fixture rules"),
+        on_confusable: OnConfusable::Abstain,
+    })
+    .expect("fixture classifier")
 }
 
 #[library_benchmark]
-#[bench::typical(setup = autosteer_pack)]
-fn autosteer_ask(pack: Autosteer) {
-    let input = Input::message("please stop and wait for the current answer before continuing");
-    let _ = black_box(pack.advise(black_box(&input), Profile::Standard));
+#[bench::typical(setup = delivery_classifier)]
+fn classifier_decide(classifier: RuleClassifier) {
+    let text = "please stop and wait for the current answer before continuing";
+    let _ = black_box(classifier.decide(black_box(text), Profile::Standard));
 }
 
 #[library_benchmark]
@@ -128,27 +142,14 @@ fn wl_fingerprint_500(g: LabeledGraph) {
     let _ = black_box(wl_refine(black_box(&g), Rounds::Fixed(3)).fingerprint());
 }
 
-#[library_benchmark]
-#[bench::mixed()]
-fn gateway_shape_mixed() {
-    let text = concat!(
-        "please set response_format\n",
-        "```rust\nfn main() {}\n```\n",
-        "--- a/x\n+++ b/x\n@@ -1 +1 @@\n-a\n+b\n",
-        r#"{"a":1,"b":{"c":2}}"#,
-    );
-    let _ = black_box(shape_of(black_box(text)));
-}
-
 library_benchmark_group!(
     name = section_53,
     benchmarks = [
-        autosteer_ask,
+        classifier_decide,
         normalize_32kib,
         cleanup_4096,
         resonator_64x64,
         wl_fingerprint_500,
-        gateway_shape_mixed,
     ]
 );
 

@@ -24,6 +24,7 @@ to public types bumps MAJOR (MINOR while 0.x).
 - `pua-core::CandidateSet` (sorted, unique candidate ids as a `Choice`) and `pua_core::abstain`.
 - `pua-lexicon::overlap` (word-overlap score between two normalized texts) and
   `pua-graph::label_of` (stable `u64` labels from key bytes).
+- ADR 0010: engine / consumer boundary (PUA owns *how*, consumers own *what*).
 
 ### Changed
 - Every `Answer::Abstain` from `pua-rules::RuleClassifier` carries all options (unscored ones in
@@ -35,3 +36,16 @@ to public types bumps MAJOR (MINOR while 0.x).
 ### Removed
 - `pua_core::{rank_candidates, RankedCandidates, CandidatePick}` (use `CandidateSet` + `decide`),
   `HdcMode` / `Thresholds::hdc` (never read), and the `Pack` trait (no generic consumer).
+- Domain packs and `pua-jev` moved to their consumers (ADR 0010; they depend on PUA by git rev):
+  `pua-steer` → hexuria/nativechat `crates/autosteer`
+  ([#194](https://github.com/hexuria/nativechat/pull/194));
+  `pua-gateway` → hexuria/open-ai-gateway `crates/oag-shape`
+  ([#149](https://github.com/hexuria/open-ai-gateway/pull/149));
+  `pua-bir` + `pua-ocr` + the OCR digit table (`pua_lexicon::ocr`) → hexuria/buwiz-forms
+  `crates/bir-suggest` / `crates/bir-cor-extract`
+  ([#67](https://github.com/hexuria/buwiz-forms/pull/67));
+  `pua-jev` → hexuria/opengrok-server `crates/opengrok-jev`
+  ([#370](https://github.com/hexuria/opengrok-server/pull/370));
+  `pua-toolbox` deleted (no consumer; the generic parts are `CandidateSet`, `overlap`, `label_of`).
+  The `jev_reply_parse` fuzz target, `docs/eval/autosteer.md`, the autosteer goldens and the
+  `gateway_shape_mixed` bench went with them; `autosteer_ask` became `classifier_decide`.

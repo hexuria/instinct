@@ -10,8 +10,8 @@ bundle, the textbook capacity measure, shown for contrast: it is why spec §4.5 
 to decode from the accumulator.
 
 Capacity is measured, not assumed (spec §4.5). Use the table to pick `D` for a
-pack's codebook size and expected bundle size; a cell below 100% means decode can
-return a non-member, so packs must keep the profile's similarity floor and margin
+consumer's codebook size and expected bundle size; a cell below 100% means decode can
+return a non-member, so consumers must keep the profile's similarity floor and margin
 checks in front of any HDC answer.
 
 ## D = 1024

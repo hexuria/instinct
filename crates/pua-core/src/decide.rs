@@ -230,7 +230,7 @@ mod tests {
 
     #[test]
     fn choice_wins_above_thresholds() {
-        let q = Question::choice("q", &["queue", "steer", "interrupt"]).unwrap();
+        let q = Question::choice("q", &["keep", "move", "stop"]).unwrap();
         let mut s = Scores::new(&q);
         s.set(i(1), c(800)).unwrap();
         s.set(i(2), c(600)).unwrap();

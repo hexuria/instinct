@@ -1,6 +1,6 @@
 [package]
 name = "pua-rules"
-description = "PUA (Predictable Universal Advisor): compiled rule packs: cues, negation, scope; no regex in rule data."
+description = "PUA (Predictable Universal Advisor): compiled rule sets (cues, negation, scope) and the RuleClassifier pipeline; no regex in rule data."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,7 +10,7 @@ publish.workspace = true
 
 [features]
 default = []
-## Deserialize `RuleSetSpec` from pack data (TOML/JSON). Validation still happens in `RuleSet::new`.
+## Deserialize `RuleSetSpec` from consumer data (TOML/JSON). Validation still happens in `RuleSet::new`.
 serde = ["dep:serde", "pua-core/serde", "pua-lexicon/serde"]
 
 [dependencies]

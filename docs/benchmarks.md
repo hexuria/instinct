@@ -6,12 +6,11 @@ Instruction-count regression gate for PUA. Wall-clock §5.3 budgets are informat
 
 | Bench | Input | Spec §5.3 row |
 |---|---|---|
-| `autosteer_ask` | one chat message (no live runs) | autosteer `ask` (≤ 16 live candidates) |
+| `classifier_decide` | one message through `RuleClassifier` on the `pua-rules` delivery fixture | classifier decide (was autosteer `ask`) |
 | `normalize_32kib` | ~32 KiB Latin prose + protected spans | text normalize, 32 KB input |
 | `cleanup_4096` | codebook n = 4096, D = 1024 | cleanup over a 4,096-entry codebook |
 | `resonator_64x64` | \|A\| = \|B\| = 64, `IterationCap::MAX` (16) | resonator worst case |
 | `wl_fingerprint_500` | 500 nodes / 2,000 directed edges, h = 3 | `wl_fingerprint` |
-| `gateway_shape_mixed` | fences + diff + JSON + structured cue | gateway shape (pack) |
 
 Setup (codebook build, graph construction, string allocation) runs **outside** the measured
 region via gungraun `setup` / `#[bench]` args.
@@ -36,7 +35,7 @@ the gate). Re-measure after algorithmic changes; do not fail CI on these.
 
 | Path | Budget (spec) | Notes |
 |---|---|---|
-| autosteer `ask` | < 2 ms | Ir gate covers regressions |
+| `RuleClassifier::decide` | < 2 ms | Ir gate covers regressions |
 | text normalize, 32 KB | < 1 ms | |
 | cleanup 4096 / D1024 | < 1 ms | |
 | resonator 64×64 ≤ 16 iters | < 5 ms | |

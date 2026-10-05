@@ -9,12 +9,13 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
-pua-core = { workspace = true, features = ["serde"] }
+pua-core.workspace = true
 pua-text.workspace = true
 pua-hdc.workspace = true
 pua-graph.workspace = true
-pua-steer.workspace = true
-pua-gateway.workspace = true
+pua-lexicon = { workspace = true, features = ["serde"] }
+pua-rules = { workspace = true, features = ["serde"] }
+toml.workspace = true
 
 [dev-dependencies]
 gungraun.workspace = true

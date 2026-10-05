@@ -1,7 +1,7 @@
 //! `pua-lexicon`: closed-vocabulary matching over canonical tokens (spec §4.3).
 //!
 //! A [`Lexicon`] is built from a [`LexiconSpec`] once and validated: every term must already be
-//! in canonical form under the pack's [`NormalizeConfig`], made of 1 to 3 free word tokens.
+//! in canonical form under the consumer's [`NormalizeConfig`], made of 1 to 3 free word tokens.
 //! [`Lexicon::lookup`] then scans a [`Normalized`] text left to right and reports, per position,
 //! the first that applies of:
 //!
@@ -17,7 +17,7 @@
 //!
 //! Tokens inside protected spans are never matched or repaired. A confusable token (mixed
 //! script or homoglyph) never produces a hit: when its ASCII skeleton is a term it is reported
-//! as a [`ConfusableFlag`] so the pack can lower confidence (spec §4.2).
+//! as a [`ConfusableFlag`] so the caller can lower confidence or abstain (spec §4.2).
 //!
 //! [`overlap`] is the open-vocabulary companion: the share of a candidate text's words that occur
 //! in a query (used to rank free-text candidates, e.g. tool descriptions).
@@ -45,7 +45,6 @@
 //! ```
 #![forbid(unsafe_code)]
 
-pub mod ocr;
 mod overlap;
 mod repair;
 
@@ -65,14 +64,14 @@ pub const MIN_SUBSTRING_CHARS: usize = 5;
 /// Shortest text token (in chars) that typo repair will touch.
 pub const MIN_REPAIR_CHARS: usize = 4;
 
-/// One vocabulary entry as written in pack data.
+/// One vocabulary entry as written in consumer data.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 pub struct EntrySpec {
     /// The term, already canonical (e.g. `"never mind"`).
     pub term: String,
-    /// Opaque pack-defined tag the hit carries (e.g. `"interrupt"`, `"rdo:043"`).
+    /// Opaque consumer-defined tag the hit carries (e.g. `"interrupt"`, `"rdo:043"`).
     pub tag: String,
     /// Opt into substring matching inside a single token (refused under 5 chars).
     #[cfg_attr(feature = "serde", serde(default))]
@@ -107,7 +106,7 @@ pub enum Repair {
     },
 }
 
-/// A whole vocabulary as written in pack data.
+/// A whole vocabulary as written in consumer data.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
@@ -421,7 +420,7 @@ fn canonical_tokens(s: &str, config: NormalizeConfig) -> Option<(String, Vec<Str
 }
 
 impl Lexicon {
-    /// Validates `spec` against `config` (the config the pack normalizes text with).
+    /// Validates `spec` against `config` (the config the consumer normalizes text with).
     ///
     /// # Errors
     /// The first [`LexiconError`] found, entries checked in spec order, then guards.

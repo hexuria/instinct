@@ -1,1 +1,0 @@
-{"model":"jev","requestId":null,"usage":{"inputTokens":10,"outputTokens":2},"answers":[{"kind":"choice","name":"delivery","choice":"steer","confidence":0.71,"probabilities":{"queue":0.2,"steer":0.71,"interrupt":0.09}}]}

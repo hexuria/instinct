@@ -303,26 +303,12 @@ version = "0.0.0"
 dependencies = [
  "gungraun",
  "pua-core",
- "pua-gateway",
  "pua-graph",
  "pua-hdc",
- "pua-steer",
- "pua-text",
-]
-
-[[package]]
-name = "pua-bir"
-version = "0.0.0"
-dependencies = [
- "blake3",
- "proptest",
- "pua-core",
- "pua-graph",
  "pua-lexicon",
+ "pua-rules",
  "pua-text",
- "serde",
  "toml",
- "unicode-normalization",
 ]
 
 [[package]]
@@ -347,20 +333,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pua-gateway"
-version = "0.0.0"
-dependencies = [
- "proptest",
- "pua-core",
- "pua-text",
- "serde",
- "serde_json",
- "unicode-normalization",
- "unicode-script",
- "unicode-security",
-]
-
-[[package]]
 name = "pua-graph"
 version = "0.0.0"
 dependencies = [
@@ -378,16 +350,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pua-jev"
-version = "0.0.0"
-dependencies = [
- "proptest",
- "pua-core",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "pua-lexicon"
 version = "0.0.0"
 dependencies = [
@@ -396,19 +358,6 @@ dependencies = [
  "pua-text",
  "serde",
  "toml",
- "unicode-normalization",
-]
-
-[[package]]
-name = "pua-ocr"
-version = "0.0.0"
-dependencies = [
- "blake3",
- "proptest",
- "pua-core",
- "pua-graph",
- "pua-text",
- "serde",
  "unicode-normalization",
 ]
 
@@ -428,24 +377,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pua-steer"
-version = "0.0.0"
-dependencies = [
- "blake3",
- "proptest",
- "pua-core",
- "pua-explain",
- "pua-hdc",
- "pua-lexicon",
- "pua-rules",
- "pua-text",
- "serde",
- "serde_json",
- "toml",
- "unicode-normalization",
-]
-
-[[package]]
 name = "pua-text"
 version = "0.0.0"
 dependencies = [
@@ -454,19 +385,6 @@ dependencies = [
  "unicode-normalization",
  "unicode-security",
  "unicode-segmentation",
-]
-
-[[package]]
-name = "pua-toolbox"
-version = "0.0.0"
-dependencies = [
- "blake3",
- "proptest",
- "pua-core",
- "pua-graph",
- "pua-lexicon",
- "pua-text",
- "serde",
 ]
 
 [[package]]
