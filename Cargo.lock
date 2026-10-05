@@ -172,6 +172,13 @@ dependencies = [
 [[package]]
 name = "pua-explain"
 version = "0.0.0"
+dependencies = [
+ "blake3",
+ "proptest",
+ "pua-core",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "pua-graph"
