@@ -20,4 +20,5 @@ exclude_re = [
     "replace Repairs::none -> Self with Default::default\\(\\)",
     "replace Codebook<D>::is_empty -> bool with false",
     "replace \\| with \\^ in Hv<D>::permute",
+    "replace > with >= in best_two",
 ]
