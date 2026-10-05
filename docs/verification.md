@@ -45,3 +45,6 @@ mutants that never terminate; the test harness kills them, so they count as dete
 the other 6 are equivalent. Three of those (`repair_hit`'s work bound `+ 2`, `c.0 > 0` and the
 `(c, e) < best` scan) were later removed by rewriting the guards (`saturating_sub`, `!= 0`, `min()`)
 after CI mutants-diff on #6 flagged them; the other three are excluded in `.cargo/mutants.toml`.
+
+Rules mutants run (T6, local, after the survivor tests): 137 mutants, 116 caught, 21 unviable,
+0 missed.

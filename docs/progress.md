@@ -11,12 +11,13 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | # | PR | Branch | Base | Scope (plan task) | Status |
 |---|---|---|---|---|---|
 | 0 | [#1](https://github.com/hexuria/pua/pull/1) | `ci/foundation` | `main` | T0 CI foundation | merged (d3a9e32) |
-| 1 | [#2](https://github.com/hexuria/pua/pull/2) | `plan` | `main` | T1 plan + review, ADR 0001 | open |
-| 2 | [#3](https://github.com/hexuria/pua/pull/3) | `core` | `plan` | T2 pua-core, ADRs 0002-0003 | open, CI green |
-| 3 | [#4](https://github.com/hexuria/pua/pull/4) | `explain` | `core` | T3 pua-explain (replay) | open, CI green |
+| 1 | [#2](https://github.com/hexuria/pua/pull/2) | `plan` | `main` | T1 plan + review, ADR 0001 | merged (6c08249) |
+| 2 | [#3](https://github.com/hexuria/pua/pull/3) | `core` | `main` | T2 pua-core, ADRs 0002-0003 | merged (f7ddbf5) |
+| 3 | [#4](https://github.com/hexuria/pua/pull/4) | `explain` | `main` | T3 pua-explain (replay) | open, CI green |
 | 4 | [#5](https://github.com/hexuria/pua/pull/5) | `text` | `explain` | T4 pua-text, ADR 0006, fuzz crate + `normalize` target | open |
 | 5 | [#6](https://github.com/hexuria/pua/pull/6) | `lexicon` | `text` | T5 pua-lexicon, fuzz `lexicon_lookup` | open |
-| 6 | #7 | `rules` | `lexicon` | T6 pua-rules, ADR 0005, fuzz `rules_match` | open |
+| 6 | [#7](https://github.com/hexuria/pua/pull/7) | `rules` | `lexicon` | T6 pua-rules, ADR 0005, fuzz `rules_match` | open |
+| 7 | #8 | `hdc` | `rules` | T7 pua-hdc, docs/hdc-capacity.md | open |
 
 ## Done
 
@@ -42,9 +43,15 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
   spec-order independence, no panics); 20k-case stress green. Fuzz `rules_match`: 307,525 runs
   / 41 s, no crash.
 
+- T7: pua-hdc (typed dimensions, seeded encoder with pinned reference vectors, bind/permute/
+  bundle, codebook nearest/cleanup/decode, resonator with `IterationCap` ≤ 16). 21 tests incl.
+  6 proptests (spec §6.6 at D1024/2048/4096). Capacity table measured (docs/hdc-capacity.md):
+  decode recall 100% up to k = 100 at every D and n ≤ 1024; sign recall drops to 64.8% at
+  D1024, n = 1024, k = 200.
+
 ## Next
 
-- T7 pua-hdc, T8 pua-graph, T9 pua-jev, then packs T10-T14.
+- T8 pua-graph, T9 pua-jev, then packs T10-T14.
 
 ## Known constraints
 
