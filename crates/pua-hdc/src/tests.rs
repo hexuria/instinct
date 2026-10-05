@@ -353,3 +353,42 @@ fn resonator_iteration_counts_are_pinned() {
     );
     assert_eq!(Encoder::new("x", 2).version(), 2);
 }
+
+#[test]
+fn decode_estimate_is_exact_for_integer_weights() {
+    // Residuals of the form `r·x + s·y` with |r| ≤ |s| score exactly ±1000 on `y` (dot = l1),
+    // so a wrong estimate is only visible when it leaves a third vector behind.
+    let bk = book(&["a", "b", "c"]);
+    let (va, vb, vc) = (hv("a"), hv("b"), hv("c"));
+    // Positive branch: 3a + b + c. Removing exactly 3a leaves b + c, so b scores 1000.
+    let mut acc = Accumulator::new();
+    acc.add(&va, 3);
+    acc.add(&vb, 1);
+    acc.add(&vc, 1);
+    let got = bk.decode(&acc, 2, Millis::MIN);
+    assert_eq!((bk.id(got[0].0), got[1].1), ("a", Millis::MAX));
+    // Negative branch: −2a − 3b − 3c. The least negative entry, a, goes first with a negative
+    // estimate that must round to exactly −2, leaving −3(b + c): b scores −1000.
+    let mut acc = Accumulator::new();
+    acc.add(&va, -2);
+    acc.add(&vb, -3);
+    acc.add(&vc, -3);
+    let got = bk.decode(&acc, 2, Millis::MIN);
+    assert_eq!((bk.id(got[0].0), bk.id(got[1].0)), ("a", "b"));
+    assert_eq!(got[1].1, Millis::MIN);
+}
+
+#[test]
+fn resonator_needs_both_estimates_unchanged() {
+    // With a single-entry `A`, `â` is already a fixed point after iteration 1 while `b̂` still
+    // moves; convergence must wait until `b̂` settles too.
+    let ab = book(&["only"]);
+    let bb = book(&["t0", "t1", "t2"]);
+    let q = hv("only").bind(&hv("t1"));
+    let Resonance::Converged { b, iterations, .. } = resonate(&q, &ab, &bb, IterationCap::MAX)
+    else {
+        panic!("expected convergence");
+    };
+    assert!(iterations >= 2, "{iterations}");
+    assert_eq!(bb.id(b.index), "t1");
+}
