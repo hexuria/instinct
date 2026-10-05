@@ -112,11 +112,8 @@ impl<'q> Scores<'q> {
     }
 }
 
-/// Ranks options (confidence descending, then index ascending) and applies the profile:
-/// below `min_confidence` or below `min_margin` the answer is [`Answer::Abstain`] carrying the
-/// ranked list. At an exact tie the lower index ranks first (option 0 is the safe default); since
-/// every profile's minimum margin is positive, an exact top-2 tie always abstains.
-pub fn decide(scores: &Scores<'_>, profile: Profile) -> Answer {
+/// Options ranked by confidence descending, then index ascending (spec §5 rule 4).
+fn rank(scores: &Scores<'_>) -> Vec<(OptionIndex, Confidence)> {
     let mut ranked: Vec<(OptionIndex, Confidence)> = scores
         .values
         .iter()
@@ -124,29 +121,49 @@ pub fn decide(scores: &Scores<'_>, profile: Profile) -> Answer {
         .map(|(i, c)| (OptionIndex::new(u16::try_from(i).unwrap_or(u16::MAX)), *c))
         .collect();
     ranked.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
+    ranked
+}
+
+/// The one threshold-and-margin gate: `Some(reason)` when the best score must not win.
+fn gate(top: Confidence, second: Confidence, profile: Profile) -> Option<AbstainReason> {
+    let t = profile.thresholds();
+    if top < t.min_confidence {
+        return Some(AbstainReason::LowConfidence {
+            top,
+            min: t.min_confidence,
+        });
+    }
+    let margin = top.saturating_sub(second);
+    if margin < t.min_margin {
+        return Some(AbstainReason::LowMargin {
+            margin,
+            min: t.min_margin,
+        });
+    }
+    None
+}
+
+/// An [`Answer::Abstain`] for `why` that still carries **every** option, ranked from `scores`,
+/// so a consumer can always show the options or escalate the same question (spec §4.6, §8).
+/// Use it when a stage refuses before (or instead of) [`decide`].
+pub fn abstain(scores: &Scores<'_>, why: AbstainReason) -> Answer {
+    Answer::Abstain {
+        why,
+        ranked: Ranked::from_sorted(rank(scores)),
+    }
+}
+
+/// Ranks options (confidence descending, then index ascending) and applies the profile:
+/// below `min_confidence` or below `min_margin` the answer is [`Answer::Abstain`] carrying the
+/// ranked list. At an exact tie the lower index ranks first (option 0 is the safe default); since
+/// every profile's minimum margin is positive, an exact top-2 tie always abstains.
+pub fn decide(scores: &Scores<'_>, profile: Profile) -> Answer {
+    let ranked = rank(scores);
     let (top_i, top_c) = ranked[0];
     let second_c = ranked.get(1).map_or(Confidence::ZERO, |e| e.1);
-    let margin = top_c.saturating_sub(second_c);
-    let t = profile.thresholds();
     let ranked = Ranked::from_sorted(ranked);
-
-    if top_c < t.min_confidence {
-        return Answer::Abstain {
-            why: AbstainReason::LowConfidence {
-                top: top_c,
-                min: t.min_confidence,
-            },
-            ranked,
-        };
-    }
-    if margin < t.min_margin {
-        return Answer::Abstain {
-            why: AbstainReason::LowMargin {
-                margin,
-                min: t.min_margin,
-            },
-            ranked,
-        };
+    if let Some(why) = gate(top_c, second_c, profile) {
+        return Answer::Abstain { why, ranked };
     }
     match scores.question {
         Question::Noul { .. } => Answer::Noul {
@@ -324,6 +341,20 @@ mod tests {
     }
 
     #[test]
+    fn abstain_carries_every_option_ranked() {
+        let q = Question::choice("q", &["a", "b", "c"]).unwrap();
+        let mut s = Scores::new(&q);
+        s.set(i(2), c(300)).unwrap();
+        assert_eq!(
+            abstain(&s, AbstainReason::Confusable),
+            Answer::Abstain {
+                why: AbstainReason::Confusable,
+                ranked: Ranked::from_sorted(vec![(i(2), c(300)), (i(0), c(0)), (i(1), c(0))]),
+            }
+        );
+    }
+
+    #[test]
     fn abstain_reason_display() {
         assert_eq!(
             AbstainReason::LowConfidence {
@@ -345,7 +376,7 @@ mod tests {
         assert_eq!(AbstainReason::NotConverged.to_string(), "not converged");
         assert_eq!(
             AbstainReason::Confusable.to_string(),
-            "confusable control word"
+            "confusable token matched a guarded term"
         );
     }
 }

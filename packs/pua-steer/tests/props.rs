@@ -2,7 +2,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::float_arithmetic)]
 
 use proptest::prelude::*;
-use pua_core::{Answer, Pack, Profile};
+use pua_core::{Answer, Profile};
 use pua_steer::{Autosteer, Input, LiveRun};
 use unicode_normalization::UnicodeNormalization as _;
 

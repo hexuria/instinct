@@ -1,6 +1,6 @@
 [package]
 name = "pua-core"
-description = "PUA (Predictable Universal Advisor): core types (Question/Answer shapes, Millis, Confidence, Span, DataVersion, profiles, decide, trail, Pack trait)."
+description = "PUA (Predictable Universal Advisor): core types (Question/Answer shapes, Millis, Confidence, Span, DataVersion, profiles, decide, candidate sets, trail)."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

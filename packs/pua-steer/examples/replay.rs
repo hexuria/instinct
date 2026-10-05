@@ -14,7 +14,7 @@ use std::env;
 use std::fs;
 use std::process::ExitCode;
 
-use pua_core::{Pack, Profile};
+use pua_core::Profile;
 use pua_explain::{ReplayCheck, ReplayRecord, render_trail};
 use pua_steer::{Autosteer, Input};
 use serde::{Deserialize, Serialize};

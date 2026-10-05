@@ -2,30 +2,17 @@
 
 use crate::Confidence;
 
-/// How far the HDC stage runs under a profile.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-pub enum HdcMode {
-    /// No HDC stage (text, lexicon, rules only).
-    Off,
-    /// Codebook cleanup only.
-    CleanupOnly,
-    /// Cleanup plus the resonator.
-    Resonator,
-}
-
 /// A decision profile.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum Profile {
-    /// Strict thresholds, no HDC.
+    /// Strict thresholds.
     Fast,
     /// The default.
     #[default]
     Standard,
-    /// Looser thresholds, resonator on.
+    /// Looser thresholds.
     Deep,
 }
 
@@ -36,8 +23,6 @@ pub struct Thresholds {
     pub min_confidence: Confidence,
     /// Minimum top-2 margin.
     pub min_margin: Confidence,
-    /// HDC stage mode.
-    pub hdc: HdcMode,
 }
 
 const fn c(v: i16) -> Confidence {
@@ -54,17 +39,14 @@ impl Profile {
             Self::Fast => Thresholds {
                 min_confidence: c(850),
                 min_margin: c(200),
-                hdc: HdcMode::Off,
             },
             Self::Standard => Thresholds {
                 min_confidence: c(750),
                 min_margin: c(150),
-                hdc: HdcMode::CleanupOnly,
             },
             Self::Deep => Thresholds {
                 min_confidence: c(650),
                 min_margin: c(100),
-                hdc: HdcMode::Resonator,
             },
         }
     }
@@ -78,7 +60,7 @@ impl Profile {
         }
     }
 
-    /// Canonical bytes of the whole profile table, folded into `DataVersion` by packs.
+    /// Canonical bytes of the whole profile table, folded into every consumer `DataVersion`.
     pub fn table_bytes() -> Vec<u8> {
         let mut out = Vec::new();
         for p in Self::ALL {
@@ -87,11 +69,6 @@ impl Profile {
             out.push(0x1f);
             out.extend_from_slice(&t.min_confidence.get().to_le_bytes());
             out.extend_from_slice(&t.min_margin.get().to_le_bytes());
-            out.push(match t.hdc {
-                HdcMode::Off => 0,
-                HdcMode::CleanupOnly => 1,
-                HdcMode::Resonator => 2,
-            });
         }
         out
     }
@@ -107,21 +84,21 @@ mod tests {
             .iter()
             .map(|p| {
                 let t = p.thresholds();
-                (p.name(), t.min_confidence.get(), t.min_margin.get(), t.hdc)
+                (p.name(), t.min_confidence.get(), t.min_margin.get())
             })
             .collect();
         assert_eq!(
             rows,
             vec![
-                ("fast", 850, 200, HdcMode::Off),
-                ("standard", 750, 150, HdcMode::CleanupOnly),
-                ("deep", 650, 100, HdcMode::Resonator),
+                ("fast", 850, 200),
+                ("standard", 750, 150),
+                ("deep", 650, 100),
             ]
         );
         assert_eq!(Profile::default(), Profile::Standard);
         assert_eq!(
             Profile::table_bytes().len(),
-            3 * (1 + 4 + 1) + "faststandarddeep".len()
+            3 * (1 + 4) + "faststandarddeep".len()
         );
     }
 }

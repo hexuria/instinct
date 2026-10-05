@@ -3,8 +3,14 @@
 use super::*;
 use pua_core::{AbstainReason, Answer, Confidence, OptionIndex, Ranked};
 
-fn empty_ranked() -> Ranked {
-    Ranked::try_from(Vec::<(OptionIndex, Confidence)>::new()).unwrap()
+/// Every abstain carries all three options; an early refusal has them unscored, in index order.
+fn unscored_ranked() -> Ranked {
+    Ranked::try_from(
+        (0..3)
+            .map(|i| (OptionIndex::new(i), Confidence::ZERO))
+            .collect::<Vec<_>>(),
+    )
+    .unwrap()
 }
 
 fn pack() -> Autosteer {
@@ -132,7 +138,7 @@ fn confusable_control_word_never_fires() {
         a.decision().answer(),
         &Answer::Abstain {
             why: AbstainReason::Confusable,
-            ranked: empty_ranked(),
+            ranked: unscored_ranked(),
         }
     );
     assert_eq!(a.auto_apply(), AutoApply::Allowed);

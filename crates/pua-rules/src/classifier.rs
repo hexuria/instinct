@@ -20,8 +20,8 @@
 use core::fmt;
 
 use pua_core::{
-    AbstainReason, Answer, Confidence, DataVersion, Decision, Millis, OptionIndex, Profile,
-    Question, QuestionError, Ranked, Scores, StageKind, Trail, TrailRecord, decide,
+    AbstainReason, Answer, DataVersion, Decision, Millis, OptionIndex, Profile, Question,
+    QuestionError, Scores, StageKind, Trail, TrailRecord, abstain, decide,
 };
 use pua_lexicon::{Lexicon, LexiconError, LexiconSpec, MatchKind};
 use pua_text::{NormalizeConfig, normalize};
@@ -159,15 +159,10 @@ impl RuleClassifier {
     }
 
     fn refuse(&self, why: AbstainReason, profile: Profile, trail: Trail) -> Decision {
-        Decision::new(
-            Answer::Abstain {
-                why,
-                ranked: empty_ranked(),
-            },
-            profile,
-            self.data_version,
-            trail,
-        )
+        // Every abstain carries all options (here unscored, so in index order) so a consumer can
+        // still show them or escalate the same question.
+        let answer = abstain(&Scores::new(&self.question), why);
+        Decision::new(answer, profile, self.data_version, trail)
     }
 
     /// Decides `text`. Pure: same text + same profile gives a byte-identical [`Decision`].
@@ -237,7 +232,7 @@ impl RuleClassifier {
             if self.on_confusable == OnConfusable::Abstain {
                 trail.push(TrailRecord::new(
                     StageKind::Decide,
-                    "abstain: confusable control word",
+                    format!("abstain: {}", AbstainReason::Confusable),
                 ));
                 return self.refuse(AbstainReason::Confusable, profile, trail);
             }
@@ -273,8 +268,4 @@ impl RuleClassifier {
         ));
         Decision::new(answer, profile, self.data_version, trail)
     }
-}
-
-fn empty_ranked() -> Ranked {
-    Ranked::try_from(Vec::<(OptionIndex, Confidence)>::new()).unwrap_or_else(|_| unreachable!())
 }

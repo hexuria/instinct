@@ -464,6 +464,7 @@ dependencies = [
  "proptest",
  "pua-core",
  "pua-graph",
+ "pua-lexicon",
  "pua-text",
  "serde",
 ]

@@ -19,6 +19,9 @@
 //! script or homoglyph) never produces a hit: when its ASCII skeleton is a term it is reported
 //! as a [`ConfusableFlag`] so the pack can lower confidence (spec §4.2).
 //!
+//! [`overlap`] is the open-vocabulary companion: the share of a candidate text's words that occur
+//! in a query (used to rank free-text candidates, e.g. tool descriptions).
+//!
 //! Hits come out in text order and the result is independent of the order entries were listed
 //! in the spec (entries are sorted by term at build time).
 //!
@@ -43,7 +46,10 @@
 #![forbid(unsafe_code)]
 
 pub mod ocr;
+mod overlap;
 mod repair;
+
+pub use overlap::{MIN_OVERLAP_CHARS, overlap};
 
 use core::fmt;
 use core::ops::Range;

@@ -11,6 +11,7 @@ publish.workspace = true
 [dependencies]
 pua-core = { workspace = true, features = ["serde"] }
 pua-text.workspace = true
+pua-lexicon.workspace = true
 pua-graph.workspace = true
 serde.workspace = true
 blake3.workspace = true
