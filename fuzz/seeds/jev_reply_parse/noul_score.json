@@ -1,1 +1,0 @@
-{"model":"jev","usage":{},"answers":[{"kind":"noul","name":"done","yes":false,"confidence":0.98,"probabilities":{"yes":0.02,"no":0.98}},{"kind":"score","name":"effort","score":1.0,"level":"a little","confidence":0.6,"legend":{"0":"none","1":"a little","2":"most of it"},"probabilities":{"0":0.1,"1":0.6,"2":0.3}}]}

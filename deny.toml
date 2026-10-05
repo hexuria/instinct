@@ -44,7 +44,7 @@ deny = [
     { crate = "sqlx", reason = "no database in PUA (spec §3.1)" },
     { crate = "reqwest", reason = "no network in PUA (spec §3.1)" },
     { crate = "hyper", reason = "no network in PUA (spec §3.1)" },
-    { crate = "typesafe-sdk", reason = "pua-jev mirrors wire JSON only; the SDK is a network client (spec §3.1)" },
+    { crate = "typesafe-sdk", reason = "a network client; PUA has no network in the decision path (spec §3.1)" },
     { crate = "opengrok-core", reason = "PUA must not depend on opengrok (spec §3.1)" },
     { crate = "opengrok-server", reason = "PUA must not depend on opengrok (spec §3.1)" },
     { crate = "opengrok-tools", reason = "PUA must not depend on opengrok (spec §3.1)" },

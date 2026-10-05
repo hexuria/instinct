@@ -45,7 +45,6 @@
 //! ```
 #![forbid(unsafe_code)]
 
-pub mod ocr;
 mod overlap;
 mod repair;
 

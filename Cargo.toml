@@ -10,12 +10,6 @@ members = [
     "crates/pua-hdc",
     "crates/pua-graph",
     "crates/pua-explain",
-    "crates/pua-jev",
-    "packs/pua-steer",
-    "packs/pua-gateway",
-    "packs/pua-bir",
-    "packs/pua-ocr",
-    "packs/pua-toolbox",
     "benches",
 ]
 
@@ -36,12 +30,6 @@ pua-rules = { path = "crates/pua-rules" }
 pua-hdc = { path = "crates/pua-hdc" }
 pua-graph = { path = "crates/pua-graph" }
 pua-explain = { path = "crates/pua-explain" }
-pua-jev = { path = "crates/pua-jev" }
-pua-steer = { path = "packs/pua-steer" }
-pua-gateway = { path = "packs/pua-gateway" }
-pua-bir = { path = "packs/pua-bir" }
-pua-ocr = { path = "packs/pua-ocr" }
-pua-toolbox = { path = "packs/pua-toolbox" }
 
 # External (permissive only; spec §3.1 candidate list). `pure` keeps blake3 free of C/asm builds.
 blake3 = { version = "1.8.7", default-features = false, features = ["pure"] }
@@ -51,7 +39,6 @@ toml = { version = "1.0", default-features = false, features = ["parse", "serde"
 unicode-normalization = { version = "0.1.25", default-features = false, features = ["std"] }
 unicode-segmentation = "1.13"
 unicode-security = "0.1.2"
-unicode-script = "0.5"
 
 # Dev-only.
 proptest = { version = "1.11", default-features = false, features = ["std", "bit-set"] }
@@ -71,8 +58,8 @@ rust_2018_idioms = { level = "warn", priority = -1 }
 # Library code never unwraps or expects; tests may (clippy.toml allow-*-in-tests).
 unwrap_used = "deny"
 expect_used = "deny"
-# The decision path is integer-only (spec §5 rule 2). Floats are allowed only at the pua-jev
-# adapter boundary, behind a local #[allow] with a comment.
+# The decision path is integer-only (spec §5 rule 2). The engine has no float boundary at all:
+# the Jev adapter (and its one f64 -> Confidence conversion) lives in opengrok-server.
 float_arithmetic = "deny"
 float_cmp = "deny"
 dbg_macro = "deny"
