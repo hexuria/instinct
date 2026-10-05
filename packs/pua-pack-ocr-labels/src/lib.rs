@@ -17,7 +17,6 @@
 
 use pua_core::{Confidence, Span};
 use pua_graph::{Edge, LabeledGraph, Rounds, wl_refine};
-use pua_text::{Fold, NormalizeConfig, PunctRuns};
 
 /// Algorithm tag.
 pub const ALGORITHM_TAG: &str = "pua-pack-ocr-labels/1";
@@ -125,8 +124,8 @@ pub fn extract(page: &str) -> Vec<Field> {
         labels.sort_by_key(|l| core::cmp::Reverse(l.len()));
         for &label in &labels {
             if let Some((mt, value_local)) = match_line(line, label) {
-                let start = line_at + value_local.start;
-                let end = line_at + value_local.end;
+                let start = line_at.saturating_add(value_local.start);
+                let end = line_at.saturating_add(value_local.end);
                 if let Ok(span) = Span::new(u32_of(start), u32_of(end)) {
                     fields.push(Field {
                         label,
@@ -137,12 +136,12 @@ pub fn extract(page: &str) -> Vec<Field> {
                 }
             } else if line_has_label_only(line, label) {
                 // Value on the next line.
-                if let Some((next_at, next)) = lines.get(i + 1) {
+                if let Some((next_at, next)) = lines.get(i.saturating_add(1)) {
                     let trimmed = next.trim();
                     if !trimmed.is_empty() {
-                        let lead = next.len() - next.trim_start().len();
-                        let start = next_at + lead;
-                        let end = start + trimmed.len();
+                        let lead = next.len().saturating_sub(next.trim_start().len());
+                        let start = next_at.saturating_add(lead);
+                        let end = start.saturating_add(trimmed.len());
                         if let Ok(span) = Span::new(u32_of(start), u32_of(end)) {
                             fields.push(Field {
                                 label,
@@ -170,7 +169,7 @@ fn match_line(line: &str, label: &str) -> Option<(MatchType, core::ops::Range<us
     None
 }
 
-fn line_has_label_only(line: &str, label: &str) -> bool {
+pub(crate) fn line_has_label_only(line: &str, label: &str) -> bool {
     let t = line.trim();
     let t = t.strip_suffix(':').unwrap_or(t).trim_end();
     eq_label(t, label, true) && !line.contains(':')
@@ -178,27 +177,31 @@ fn line_has_label_only(line: &str, label: &str) -> bool {
 
 fn find_label_value(line: &str, label: &str, fold: bool) -> Option<core::ops::Range<usize>> {
     // Scan for `LABEL : value` anywhere on the line (leading spaces / prose prefixes allowed).
-    let mut at = 0usize;
-    while at < line.len() {
-        if line.is_char_boundary(at)
-            && let Some(lab_len) = label_len_in(&line[at..], label, fold)
-        {
-            let after_label = at + lab_len;
-            let after = line.get(after_label..)?;
-            if let Some(colon) = after.find(':')
-                && after[..colon].chars().all(char::is_whitespace)
-            {
-                let value_start = after_label + colon + 1;
-                let value = line.get(value_start..)?;
-                let lead = value.len() - value.trim_start().len();
-                let trim = value.trim();
-                if !trim.is_empty() {
-                    let start = value_start + lead;
-                    return Some(start..start + trim.len());
-                }
-            }
+    for (at, _) in line.char_indices() {
+        let Some(lab_len) = label_len_in(&line[at..], label, fold) else {
+            continue;
+        };
+        let after_label = at.saturating_add(lab_len);
+        let Some(after) = line.get(after_label..) else {
+            continue;
+        };
+        let Some(colon) = after.find(':') else {
+            continue;
+        };
+        if !after[..colon].chars().all(char::is_whitespace) {
+            continue;
         }
-        at += line[at..].chars().next().map_or(1, char::len_utf8);
+        let value_start = after_label.saturating_add(colon).saturating_add(1);
+        let Some(value) = line.get(value_start..) else {
+            continue;
+        };
+        let lead = value.len().saturating_sub(value.trim_start().len());
+        let trim = value.trim();
+        if trim.is_empty() {
+            continue;
+        }
+        let start = value_start.saturating_add(lead);
+        return Some(start..start.saturating_add(trim.len()));
     }
     None
 }
@@ -222,7 +225,7 @@ fn label_len_in(rest: &str, label: &str, fold: bool) -> Option<usize> {
     }
 }
 
-fn eq_label(a: &str, b: &str, fold: bool) -> bool {
+pub(crate) fn eq_label(a: &str, b: &str, fold: bool) -> bool {
     if !fold {
         return a == b;
     }
@@ -231,7 +234,7 @@ fn eq_label(a: &str, b: &str, fold: bool) -> bool {
     ac.len() == bc.len() && ac.iter().zip(&bc).all(|(x, y)| chars_eq(*x, *y, true))
 }
 
-fn chars_eq(a: char, b: char, fold: bool) -> bool {
+pub(crate) fn chars_eq(a: char, b: char, fold: bool) -> bool {
     if a == b {
         return true;
     }
@@ -261,19 +264,11 @@ pub fn layout_fingerprint(fields: &[Field]) -> [u8; 32] {
         }
     }
     for i in 0..nodes.len() {
-        for j in (i + 1)..nodes.len() {
+        for j in i.saturating_add(1)..nodes.len() {
             let _ = g.add_edge(nodes[i], nodes[j], Edge::undirected());
         }
     }
     wl_refine(&g, Rounds::Fixed(3)).fingerprint()
-}
-
-/// Config used when a consumer wants a folded view of a label (diacritics kept).
-pub fn label_config() -> NormalizeConfig {
-    NormalizeConfig {
-        fold: Fold::UnicodeLower,
-        punct_runs: PunctRuns::Keep,
-    }
 }
 
 #[cfg(test)]
