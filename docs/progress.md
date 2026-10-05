@@ -17,8 +17,8 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | 4 | [#5](https://github.com/hexuria/pua/pull/5) | `text` | `main` | T4 pua-text, ADR 0006, fuzz crate + `normalize` target | merged (53809a7) |
 | 5 | [#6](https://github.com/hexuria/pua/pull/6) | `lexicon` | `main` | T5 pua-lexicon, fuzz `lexicon_lookup` | merged (bad3ace) |
 | 6 | [#7](https://github.com/hexuria/pua/pull/7) | `rules` | `main` | T6 pua-rules, ADR 0005, fuzz `rules_match` | merged (71f056f) |
-| 7 | [#8](https://github.com/hexuria/pua/pull/8) | `hdc` | `main` | T7 pua-hdc, docs/hdc-capacity.md | open, CI green |
-| 8 | [#9](https://github.com/hexuria/pua/pull/9) | `graph` | `hdc` | T8 pua-graph (1-WL, spd-wl), fuzz `graph_from_bytes` | open, CI green |
+| 7 | [#8](https://github.com/hexuria/pua/pull/8) | `hdc` | `main` | T7 pua-hdc, docs/hdc-capacity.md | merged (7316e2e) |
+| 8 | [#9](https://github.com/hexuria/pua/pull/9) | `graph` | `main` | T8 pua-graph (1-WL, spd-wl), fuzz `graph_from_bytes` | open, CI pending |
 | 9 | [#10](https://github.com/hexuria/pua/pull/10) | `jev` | `graph` | T9 pua-jev, ADR 0009, fuzz `jev_reply_parse` | open, CI green |
 
 ## Done
