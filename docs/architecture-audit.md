@@ -476,7 +476,7 @@ Every handoff target accepted a PR, so nothing was parked on an `archive/packs-*
 | §10 step 3 + 5 | [#21](https://github.com/hexuria/pua/pull/21) (merged `6aef318`) | `pua-rules::RuleClassifier` (`ClassifierSpec`, `OnConfusable`) is the shared pipeline. The `delivery` fixture and its golden journal in `crates/pua-rules/tests/fixtures/delivery/` replay byte-identical to the old `pua-steer` journal. |
 | §10 steps 1, 2, 4 + B6 | [#22](https://github.com/hexuria/pua/pull/22) (merged `e1635f1`) | `pua-core`: `CandidateSet`, one private gate in `decide`, `abstain()` so every abstain carries all options ranked, neutral confusable text. Removed `rank_candidates`, `RankedCandidates`, `CandidatePick`, `HdcMode`, `Thresholds::hdc` and the `Pack` trait. Added `pua-lexicon::overlap` and `pua-graph::label_of`. Toolbox fix: `chosen_id` is `None` on abstain. `DataVersion` changed on every golden row, because the profile table lost its HDC column. |
 | B8 handoffs | nativechat#194, open-ai-gateway#149, buwiz-forms#67, opengrok-server#370 (drafts) | Consumer-owned crates depend on PUA by git rev `e1635f1`. See the migration table below. |
-| B1–B5, B7 + §10 step 6 | [#23](https://github.com/hexuria/pua/pull/23) | Removed `packs/` (all five) and `crates/pua-jev`. Removed `pua_lexicon::ocr`, the `jev_reply_parse` fuzz target, `docs/eval/autosteer.md` and the autosteer goldens. Cleaned the workspace members, CODEOWNERS, `scripts/architecture.txt`, `scripts/mutants.sh` and repo rules. The `autosteer_ask` bench became `classifier_decide`, and `gateway_shape_mixed` was dropped. Engine docs now use consumer-neutral wording. README and spec were rewritten around "PUA owns *how*". Added ADR 0010. |
+| B1–B5, B7 + §10 step 6 | [#23](https://github.com/hexuria/pua/pull/23) (merged `e968440`) | Removed `packs/` (all five) and `crates/pua-jev`. Removed `pua_lexicon::ocr`, the `jev_reply_parse` fuzz target, `docs/eval/autosteer.md` and the autosteer goldens. Cleaned the workspace members, CODEOWNERS, `scripts/architecture.txt`, `scripts/mutants.sh` and repo rules. The `autosteer_ask` bench became `classifier_decide`, and `gateway_shape_mixed` was dropped. Engine docs now use consumer-neutral wording. README and spec were rewritten around "PUA owns *how*". Added ADR 0010. |
 
 ### Crates
 
@@ -528,7 +528,7 @@ because the pack tests now run in the consumer repos.
 1. **Workflows still mention packs.** The `bench.yml` and `mutants-diff.yml` path filters list
    `packs/**`, `mutants-diff.yml` diffs `crates packs`, and the nightly unsafe grep scans `packs`. These references are harmless now, because the directory is gone. The
    box token lacks `workflow` scope (ADR 0001), so the cleanup has to be pushed from the Mac.
-2. **No PUA tag yet.** Cut `v0.1.0` once #23 is on `main`, then move the consumer pins from
+2. **No PUA tag yet.** #23 is on `main` (`e968440`); cut `v0.1.0` from it, then move the consumer pins from
    `rev = "e1635f1"` to the tag. The engine API changed between the pinned rev and #23 (`ocr`
    is gone), but no consumer imports the removed module.
 3. **The handoff PRs are drafts awaiting the owners.** Each one adds a crate but does not yet wire
