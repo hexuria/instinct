@@ -22,10 +22,12 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | 9 | [#10](https://github.com/hexuria/pua/pull/10) | `jev` | `main` | T9 pua-jev, ADR 0009, fuzz `jev_reply_parse` | merged (3c6fd68) |
 | 10 | [#11](https://github.com/hexuria/pua/pull/11) | `autosteer` | `main` | T10 pua-pack-autosteer, ADR 0008, eval+goldens | merged (761365c) |
 | 11 | [#12](https://github.com/hexuria/pua/pull/12) | `fix-autosteer-mutants` | `main` | T10 mutants survivors | merged (5e4732d) |
-| 12 | (pending) | `gateway` | `main` | T11 pua-pack-gateway-shape | open (local) |
-| 13 | (pending) | `bir` | `gateway` | T12 pua-pack-bir-fields | open (local) |
-| 14 | (pending) | `ocr-labels` | `bir` | T13 pua-pack-ocr-labels | open (local) |
-| 15 | (pending) | `tool-selection` | `ocr-labels` | T14 pua-pack-tool-selection | open (local) |
+| 12 | [#13](https://github.com/hexuria/pua/pull/13) | `gateway` | `main` | T11 pua-pack-gateway-shape | merged (ecbe60a) |
+| 13 | [#14](https://github.com/hexuria/pua/pull/14) | `bir` | `main` | T12 pua-pack-bir-fields | merged (3316f11) |
+| 14 | [#15](https://github.com/hexuria/pua/pull/15) | `ocr-labels` | `main` | T13 pua-pack-ocr-labels | merged (87ec58f) |
+| 15 | [#16](https://github.com/hexuria/pua/pull/16) | `tool-selection` | `main` | T14 pua-pack-tool-selection | merged (a097137) |
+| 16 | [#17](https://github.com/hexuria/pua/pull/17) | `benches` | `main` | T15–T17 benches, fuzz docs, review-report | open |
+
 
 ## Done
 
@@ -88,7 +90,7 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 
 ## Next
 
-- T15 benches (`pua-benches` + docs/benchmarks.md), T16 fuzz wiring confirmation, T17 review-report.md.
+- Land #17 (T15–T17); main then holds T0–T17.
 
 ## Known constraints
 

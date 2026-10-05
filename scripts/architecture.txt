@@ -28,3 +28,7 @@ pua-jev: pua-core
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
 pua-pack-*: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+
+# Bench harness (Callgrind Ir gate). May depend on every library crate; still bans network/async.
+pua-benches: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain pua-jev pua-pack-autosteer pua-pack-gateway-shape pua-pack-bir-fields pua-pack-ocr-labels pua-pack-tool-selection
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
