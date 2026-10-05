@@ -98,6 +98,7 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 
 - T0–T17 complete on `main`. Pack crates renamed to `pua-steer` / `pua-gateway` / `pua-bir` / `pua-ocr` / `pua-toolbox` (this PR).
 - Follow-ups: consumer adoption, Phase B target-selection.
+- Phase 1 architecture audit (docs only): [docs/architecture-audit.md](architecture-audit.md). Proposes the engine/consumer split; destructive steps B1–B8 await owner approval.
 
 
 ## Known constraints
