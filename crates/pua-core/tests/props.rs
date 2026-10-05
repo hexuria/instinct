@@ -167,7 +167,10 @@ fn exact_boundaries_and_conversions() {
     let q = question(2);
     let o: &Options = q.options().unwrap();
     assert_eq!(
-        o.labels().iter().map(|l| l.as_str()).collect::<Vec<_>>(),
+        o.labels()
+            .iter()
+            .map(pua_core::Label::as_str)
+            .collect::<Vec<_>>(),
         ["opt0", "opt1"]
     );
     assert_eq!(String::from(o.labels()[1].clone()), "opt1");
