@@ -26,7 +26,7 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | 13 | [#14](https://github.com/hexuria/pua/pull/14) | `bir` | `main` | T12 pua-pack-bir-fields | merged (3316f11) |
 | 14 | [#15](https://github.com/hexuria/pua/pull/15) | `ocr-labels` | `main` | T13 pua-pack-ocr-labels | merged (87ec58f) |
 | 15 | [#16](https://github.com/hexuria/pua/pull/16) | `tool-selection` | `main` | T14 pua-pack-tool-selection | merged (a097137) |
-| 16 | [#17](https://github.com/hexuria/pua/pull/17) | `benches` | `main` | T15–T17 benches, fuzz docs, review-report | open |
+| 16 | [#17](https://github.com/hexuria/pua/pull/17) | `benches` | `main` | T15–T17 benches, fuzz docs, review-report | merged (727ab99) |
 
 
 ## Done
@@ -88,9 +88,16 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 - T13: pua-pack-ocr-labels — COR extraction via original spans; three A §5.3 cases; NFC/NFD free move.
 - T14: pua-pack-tool-selection — Choice/Abstain over tools; call-DAG WL; permutation/case/space props.
 
+
+- T11–T14 packs merged (#13–#16).
+- T15: `benches/pua-benches` gungraun Ir paths + docs/benchmarks.md; bench-gate uses `--bench paths`.
+- T16: fuzz targets/seeds/nightly smoke confirmed in docs/verification.md.
+- T17: docs/review-report.md.
+
 ## Next
 
-- Land #17 (T15–T17); main then holds T0–T17.
+- T0–T17 complete on `main` at 727ab99. Follow-ups: consumer adoption, Phase B target-selection.
+
 
 ## Known constraints
 
