@@ -23,9 +23,6 @@ either killed by a new test or listed below as equivalent, with the reason.
 | `pua-text` `covered` | → `false` | A shortcut before the overlap check: an open inside an earlier span either finds a close (the overlap check skips it) or finds none, and then no later open can find one either (every closer is at or after it). |
 | `pua-lexicon` `Lexicon::is_empty` | → `false` | A built lexicon always has at least one entry (`NoEntries` is refused). |
 | `pua-lexicon` `substring_hit` | `word.len() > term.len()` → `>=` | Equal length plus `contains` means `word == term`, which the exact stage already matched. |
-| `pua-lexicon` `repair_hit` | `longest_single + 2` → `* 2` | Only a work bound: for a term of ≤ 2 chars no token of ≥ 4 chars is within distance 1 anyway, and for longer terms `*2` only admits tokens that fail the distance check. |
-| `pua-lexicon` `repair_hit` | `c.0 > 0` → `>=` | Cost 0 means an exact single-token term, which the exact stage already matched. |
-| `pua-lexicon` `repair_hit` | `(c, e) < best` → `<=` | Candidates are distinct ids visited once each, so the pair is never equal to `best`. |
 | `pua-lexicon` `qwerty_adjacent` | `ra < rb` → `<=` | The `ra == rb` case returned earlier. |
 
 ### Survivors killed by new tests
@@ -43,4 +40,6 @@ loop-step mutants that never terminate and count as detected).
 Lexicon mutants run (T5, local): 199 mutants, 150 caught, 25 unviable, 11 timeouts (loop-step
 mutants that never terminate; the test harness kills them, so they count as detected), 13 missed.
 7 of the 13 were killed by `tests::mutants_survivors_pinned` and `tests::substring_tie_breaks`;
-the other 6 are equivalent (table above).
+the other 6 are equivalent. Three of those (`repair_hit`'s work bound `+ 2`, `c.0 > 0` and the
+`(c, e) < best` scan) were later removed by rewriting the guards (`saturating_sub`, `!= 0`, `min()`)
+after CI mutants-diff on #6 flagged them; the other three are excluded in `.cargo/mutants.toml`.
