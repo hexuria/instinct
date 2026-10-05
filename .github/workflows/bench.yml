@@ -1,0 +1,40 @@
+# Benchmark regression gate (skill §4): instruction counts from Callgrind via gungraun, base and
+# head measured back to back in ONE job on the same runner. Decision rule: fail when any
+# benchmark's Ir grows by more than $PUA_BENCH_LIMIT versus the merge base (docs/benchmarks.md).
+name: Bench
+
+on:
+  pull_request:
+    paths: ["crates/**", "packs/**", "benches/**", "Cargo.lock", ".github/workflows/bench.yml", "scripts/bench-gate.sh"]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  PUA_BENCH_LIMIT: "ir=10%"
+
+jobs:
+  callgrind:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - run: rustup toolchain install
+      - run: sudo apt-get update && sudo apt-get install -y valgrind
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: taiki-e/install-action@e407f7bafb71fd004bc5c2da3032e5470cbb6ef0 # v2.87.24
+        with:
+          tool: gungraun-runner@0.20.0
+      - name: Gate against merge base
+        run: scripts/bench-gate.sh "${{ github.event.pull_request.base.sha || github.event.before || 'HEAD~1' }}"
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: gungraun
+          path: target/gungraun
+          if-no-files-found: ignore

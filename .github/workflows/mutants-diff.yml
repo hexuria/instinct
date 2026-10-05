@@ -1,0 +1,37 @@
+# Mutation testing scoped to the PR diff (spec §5.1, after open-ai-gateway scripts/mutants-diff.py).
+# Advisory: not part of ci-ok until the baseline is clean; survivors are listed in the job log.
+name: Mutants (diff)
+
+on:
+  pull_request:
+    paths: ["crates/**", "packs/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutants-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mutants-in-diff:
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: taiki-e/install-action@e407f7bafb71fd004bc5c2da3032e5470cbb6ef0 # v2.87.24
+        with:
+          tool: cargo-mutants,cargo-nextest
+      - run: git diff "origin/${{ github.base_ref }}...HEAD" -- crates packs > pr.diff
+      - run: cargo mutants --workspace --in-diff pr.diff --test-tool nextest --timeout-multiplier 3 --no-shuffle -vV
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutants-diff-out
+          path: mutants.out
+          if-no-files-found: ignore

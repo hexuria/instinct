@@ -1,0 +1,119 @@
+# Pull-request gate (skill "CI shape": PR tier). Every job runs on the pinned 1.99.0 toolchain from
+# rust-toolchain.toml. `ci-ok` is the single required check.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  RUST_BACKTRACE: "1"
+
+jobs:
+  repo-rules:
+    name: repo rules (toolchain pin, forbid unsafe, ceilings, architecture)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pinned toolchain (rust-toolchain.toml)
+        run: rustup toolchain install && rustc --version | grep -q '^rustc 1\.99\.0 '
+      - run: scripts/check_repo_rules.sh
+      - run: python3 scripts/check_architecture.py --self-test
+      - run: python3 scripts/check_architecture.py
+
+  fmt:
+    name: rustfmt
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup toolchain install
+      - run: cargo fmt --all --check
+
+  clippy:
+    name: clippy (-D warnings)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+
+  check-crates:
+    name: each crate alone (--no-default-features, --locked)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: cargo check per crate
+        run: |
+          set -euo pipefail
+          for pkg in $(cargo metadata --format-version 1 --no-deps --locked | jq -r '.packages[].name' | sort); do
+            echo "::group::$pkg"
+            RUSTFLAGS="-D warnings" cargo check -p "$pkg" --no-default-features --locked
+            RUSTFLAGS="-D warnings" cargo check -p "$pkg" --all-features --locked
+            echo "::endgroup::"
+          done
+
+  test:
+    name: tests (unit, integration, proptest, golden, doctests)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: taiki-e/install-action@e407f7bafb71fd004bc5c2da3032e5470cbb6ef0 # v2.87.24
+        with:
+          tool: cargo-nextest
+      - run: cargo nextest run --workspace --all-features --locked --profile ci --no-tests=pass
+      - run: cargo test --workspace --all-features --locked --doc
+      - name: Upload JUnit
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: junit
+          path: target/nextest/ci/junit.xml
+          if-no-files-found: ignore
+
+  docs:
+    name: rustdoc (-D warnings)
+    runs-on: ubuntu-24.04
+    env:
+      RUSTDOCFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo doc --workspace --no-deps --all-features --locked
+
+  deny:
+    name: cargo-deny (advisories, licenses, bans, sources)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          command: check
+          arguments: --all-features
+
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [repo-rules, fmt, clippy, check-crates, test, docs, deny]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: All required jobs passed
+        run: |
+          echo '${{ toJSON(needs) }}' | jq -e 'to_entries | all(.value.result == "success")'

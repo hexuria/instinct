@@ -1,0 +1,67 @@
+# Release tier: a tag vMAJOR.MINOR.PATCH on main (spec §3.2; no crates.io publish before 1.0, q11).
+# Runs the full PR gate, checks semver against the previous tag, records the public API, and
+# requires a CHANGELOG entry for the tag.
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  NIGHTLY: nightly-2026-10-01
+
+jobs:
+  gate:
+    uses: ./.github/workflows/ci.yml
+
+  changelog:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: CHANGELOG has an entry for this tag
+        run: grep -qE "^## \[?${GITHUB_REF_NAME#v}\]?" CHANGELOG.md
+
+  semver:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - run: rustup toolchain install
+      - uses: taiki-e/install-action@e407f7bafb71fd004bc5c2da3032e5470cbb6ef0 # v2.87.24
+        with:
+          tool: cargo-semver-checks
+      - name: cargo-semver-checks against the previous tag
+        run: |
+          set -euo pipefail
+          prev=$(git tag --list 'v*.*.*' --sort=-v:refname | grep -vx "$GITHUB_REF_NAME" | head -1 || true)
+          if [ -z "$prev" ]; then echo "first release: no baseline"; exit 0; fi
+          # publish = false crates are skipped unless named explicitly.
+          for pkg in $(cargo metadata --format-version 1 --no-deps --locked | jq -r '.packages[].name'); do
+            cargo semver-checks check-release -p "$pkg" --baseline-rev "$prev"
+          done
+
+  public-api:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup toolchain install && rustup toolchain install $NIGHTLY --profile minimal
+      - uses: taiki-e/install-action@e407f7bafb71fd004bc5c2da3032e5470cbb6ef0 # v2.87.24
+        with:
+          tool: cargo-public-api
+      - name: Record public API per crate
+        run: |
+          set -euo pipefail
+          mkdir -p public-api
+          for pkg in $(cargo metadata --format-version 1 --no-deps --locked | jq -r '.packages[].name'); do
+            cargo public-api --toolchain "$NIGHTLY" -p "$pkg" --all-features > "public-api/$pkg.txt"
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: public-api
+          path: public-api

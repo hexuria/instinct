@@ -1,5 +1,4 @@
-# PUA: Predictable Universal Advisor.
-# Spec only for now: every member is an empty stub. See docs/spec.md.
+# PUA: Predictable Universal Advisor. See docs/spec.md and docs/plan.md.
 [workspace]
 resolver = "3"
 members = [
@@ -27,10 +26,40 @@ repository = "https://github.com/hexuria/pua"
 publish = false
 
 [workspace.dependencies]
-# Internal crates (path deps added when code lands; no external deps yet).
+# Internal crates (path deps added when code lands).
 
+# Lints are part of the quality bar (docs/plan.md, AGENTS.md). CI runs clippy with -D warnings,
+# so every "warn" below is a hard failure in CI while staying friendly during local iteration.
 [workspace.lints.rust]
 unsafe_code = "forbid"
+unsafe_op_in_unsafe_fn = "deny"
+missing_docs = "warn"
+unreachable_pub = "warn"
+unused_qualifications = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
 
 [workspace.lints.clippy]
+# Library code never unwraps or expects; tests may (clippy.toml allow-*-in-tests).
 unwrap_used = "deny"
+expect_used = "deny"
+# The decision path is integer-only (spec §5 rule 2). Floats are allowed only at the pua-jev
+# adapter boundary, behind a local #[allow] with a comment.
+float_arithmetic = "deny"
+float_cmp = "deny"
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"
+print_stdout = "warn"
+print_stderr = "warn"
+mem_forget = "deny"
+# Pedantic subset: on by default, with the noisy ones opted out deliberately.
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_panics_doc = "warn"
+missing_errors_doc = "warn"
+similar_names = "allow"
+too_many_lines = "allow"
+
+[profile.release]
+debug = 1
