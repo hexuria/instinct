@@ -115,6 +115,16 @@ name = "pua-fuzz"
 version = "0.0.0"
 dependencies = [
  "libfuzzer-sys",
+ "pua-core",
+ "pua-lexicon",
+ "pua-text",
+]
+
+[[package]]
+name = "pua-lexicon"
+version = "0.0.0"
+dependencies = [
+ "pua-core",
  "pua-text",
 ]
 
