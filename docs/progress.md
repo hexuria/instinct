@@ -19,7 +19,8 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | 6 | [#7](https://github.com/hexuria/pua/pull/7) | `rules` | `main` | T6 pua-rules, ADR 0005, fuzz `rules_match` | merged (71f056f) |
 | 7 | [#8](https://github.com/hexuria/pua/pull/8) | `hdc` | `main` | T7 pua-hdc, docs/hdc-capacity.md | merged (7316e2e) |
 | 8 | [#9](https://github.com/hexuria/pua/pull/9) | `graph` | `main` | T8 pua-graph (1-WL, spd-wl), fuzz `graph_from_bytes` | merged (2e9a0f4) |
-| 9 | [#10](https://github.com/hexuria/pua/pull/10) | `jev` | `main` | T9 pua-jev, ADR 0009, fuzz `jev_reply_parse` | open, CI pending |
+| 9 | [#10](https://github.com/hexuria/pua/pull/10) | `jev` | `main` | T9 pua-jev, ADR 0009, fuzz `jev_reply_parse` | merged (3c6fd68) |
+| 10 | [#11](https://github.com/hexuria/pua/pull/11) | `autosteer` | `main` | T10 pua-pack-autosteer, ADR 0008, eval+goldens | open |
 
 ## Done
 
@@ -68,9 +69,14 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
   4 equivalent excluded); pua-lexicon `repair_hit` guards rewritten so they have no
   equivalent mutants. Stack rebased on the fixes.
 
+- T10: pua-pack-autosteer (Choice delivery=[queue,steer,interrupt]; data/*.toml; text→lexicon→rules→decide;
+  AutoApply::Never on interrupt; confusable control words → Abstain; 221 labelled messages;
+  interrupt FP=0 at standard; keyword-baseline comparison in docs/eval/autosteer.md; golden
+  journal + replay CLI; generator-sequence proptests). ADR 0008.
+
 ## Next
 
-- T10 autosteer pack, then T11-T14 packs, T15 benches, T16 fuzz wiring, T17 review report.
+- T11 gateway-shape pack, then T12-T14 packs, T15 benches, T16 fuzz, T17 review report.
 
 ## Known constraints
 

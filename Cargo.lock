@@ -222,6 +222,20 @@ dependencies = [
 [[package]]
 name = "pua-pack-autosteer"
 version = "0.0.0"
+dependencies = [
+ "blake3",
+ "proptest",
+ "pua-core",
+ "pua-explain",
+ "pua-hdc",
+ "pua-lexicon",
+ "pua-rules",
+ "pua-text",
+ "serde",
+ "serde_json",
+ "toml",
+ "unicode-normalization",
+]
 
 [[package]]
 name = "pua-pack-bir-fields"
