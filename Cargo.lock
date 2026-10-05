@@ -200,6 +200,12 @@ dependencies = [
 [[package]]
 name = "pua-jev"
 version = "0.0.0"
+dependencies = [
+ "proptest",
+ "pua-core",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "pua-lexicon"
