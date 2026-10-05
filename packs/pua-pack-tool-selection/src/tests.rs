@@ -96,3 +96,27 @@ fn id_tie_break_prefers_lexicographically_earlier() {
         other => panic!("{other:?}"),
     }
 }
+
+#[test]
+fn mutants_survivors_pinned() {
+    assert_eq!(ToolId::new("fs.write").to_string(), "fs.write");
+    let c = Candidate::new("fs.write", "write a file to disk");
+    assert_eq!(c.description(), "write a file to disk");
+    assert_ne!(c.description(), "");
+
+    // Short tokens (< 3) ignored; leaf id token participates.
+    let tools = [
+        Candidate::new("ns.ab", "xy zz"), // all tokens < 3 after filters → zero-ish
+        Candidate::new("ns.write", "do stuff"),
+    ];
+    let d = select("please write now", &tools, Profile::Deep);
+    assert_eq!(chosen_id(&d, &tools).unwrap().as_str(), "ns.write");
+
+    let nodes = [(ToolId::new("a"), 1u64), (ToolId::new("b"), 2)];
+    let e = [(0usize, 1)];
+    let fp = call_dag_fingerprint(&nodes, &e);
+    assert_ne!(fp, [0u8; 32]);
+    assert_ne!(fp, [1u8; 32]);
+    let empty = call_dag_fingerprint(&[], &[]);
+    assert_ne!(fp, empty);
+}

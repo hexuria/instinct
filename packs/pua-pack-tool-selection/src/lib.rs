@@ -140,18 +140,23 @@ pub fn chosen_id<'a>(decision: &Decision, candidates: &'a [Candidate]) -> Option
     sorted.get(idx.get() as usize).map(|c| c.id())
 }
 
+fn is_token_sep(c: char) -> bool {
+    !c.is_alphanumeric()
+}
+
 fn overlap_score(message: &str, tool_id: &str, description: &str) -> Confidence {
+    const MIN_TOKEN: usize = 3;
     let msg: Vec<&str> = message
-        .split(|c: char| !c.is_alphanumeric())
-        .filter(|t| t.len() > 2)
+        .split(is_token_sep)
+        .filter(|t| t.len() >= MIN_TOKEN)
         .collect();
     let mut desc: Vec<&str> = description
-        .split(|c: char| !c.is_alphanumeric())
-        .filter(|t| t.len() > 2)
+        .split(is_token_sep)
+        .filter(|t| t.len() >= MIN_TOKEN)
         .collect();
     if let Some(leaf) = tool_id.rsplit(['.', '/', ':']).next()
-        && leaf.len() > 2
-        && !desc.contains(&leaf)
+        && leaf.len() >= MIN_TOKEN
+        && desc.iter().all(|t| *t != leaf)
     {
         desc.push(leaf);
     }
