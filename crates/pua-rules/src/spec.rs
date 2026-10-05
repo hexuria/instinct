@@ -1,4 +1,4 @@
-//! Rule data as written in pack files, and its validation errors.
+//! Rule data as written in consumer data files, and its validation errors.
 
 use core::fmt;
 
@@ -24,7 +24,7 @@ pub struct ClassSpec {
     pub scorer: ScorerKind,
 }
 
-/// One rule as written in pack data.
+/// One rule as written in consumer data.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
@@ -49,7 +49,7 @@ pub struct RuleSpec {
     pub version: u32,
 }
 
-/// A whole rule set as written in pack data.
+/// A whole rule set as written in consumer data.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]

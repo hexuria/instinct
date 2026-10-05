@@ -92,7 +92,7 @@ impl fmt::Display for Millis {
     }
 }
 
-/// A confidence on a 0..=1000 scale. Deterministic and comparable within one pack and
+/// A confidence on a 0..=1000 scale. Deterministic and comparable within one data version and
 /// `DataVersion`; **not** a calibrated probability.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

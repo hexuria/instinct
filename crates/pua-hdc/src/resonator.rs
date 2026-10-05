@@ -73,7 +73,7 @@ pub enum Resonance {
         /// Iterations used (the last one confirmed the fixed point).
         iterations: u8,
     },
-    /// No fixed point within the cap: the pack must abstain (`AbstainReason::NotConverged`).
+    /// No fixed point within the cap: the caller must abstain (`AbstainReason::NotConverged`).
     NotConverged {
         /// Iterations used (= the cap).
         iterations: u8,

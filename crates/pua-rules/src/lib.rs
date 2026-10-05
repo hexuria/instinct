@@ -1,6 +1,6 @@
 //! `pua-rules`: data-driven cue rules over canonical tokens (spec §4.4).
 //!
-//! A [`RuleSet`] is compiled once from a [`RuleSetSpec`] (TOML in a pack's `data/`). Patterns
+//! A [`RuleSet`] is compiled once from a [`RuleSetSpec`] (TOML or JSON owned by the consumer). Patterns
 //! are literal canonical tokens plus two slots, `{word}` and `{gerund}`; there is **no regex**
 //! in rule data. Matching is keyed by token (ADR 0005), so it is token-boundary by
 //! construction: `stop` never fires inside `stopwatch`.

@@ -3,12 +3,12 @@
 //!
 //! A [`ReplayRecord`] is `(schema, input hash, input, decision)`. Serialized with
 //! [`ReplayRecord::to_json_line`] it is one canonical JSON line: struct fields in declaration
-//! order, no maps, integers only. Re-running the pack on the stored input must reproduce the
+//! order, no maps, integers only. Re-running the classifier on the stored input must reproduce the
 //! stored line byte for byte ([`ReplayRecord::check`]); any difference is reported as a
 //! [`DecisionDiff`], typically because `DataVersion` moved.
 //!
 //! Inputs must serialize deterministically: no `HashMap`, no floats. That is the caller's
-//! contract; packs use plain structs and sorted vectors.
+//! contract; consumers use plain structs and sorted vectors.
 #![forbid(unsafe_code)]
 
 use core::fmt;

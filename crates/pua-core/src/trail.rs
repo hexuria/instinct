@@ -1,4 +1,4 @@
-//! The explanation trail (spec §4.7). Types live here because [`crate::Pack::ask`] returns them;
+//! The explanation trail (spec §4.7). Types live here because every [`crate::Decision`] carries one;
 //! `pua-explain` owns replay records, diffs and rendering (ADR 0003).
 
 use crate::{Millis, Span};
@@ -190,7 +190,7 @@ mod tests {
         t.push(TrailRecord::new(StageKind::Normalize, "nfc ok"));
         t.push(
             TrailRecord::new(StageKind::Rules, "cue")
-                .rule("interrupt.stop.v1")
+                .rule("stop.cue.v1")
                 .scorer(ScorerKind::Max)
                 .span(Span::new(0, 4).unwrap())
                 .millis(Millis::new(700).unwrap()),
@@ -200,7 +200,7 @@ mod tests {
         let r = &t.records()[1];
         assert_eq!(r.step(), 2);
         assert_eq!(r.stage(), StageKind::Rules);
-        assert_eq!(r.rule_id(), Some("interrupt.stop.v1"));
+        assert_eq!(r.rule_id(), Some("stop.cue.v1"));
         assert_eq!(r.scorer_kind(), Some(ScorerKind::Max));
         assert_eq!(r.span_ref(), Some(Span::new(0, 4).unwrap()));
         assert_eq!(r.contribution().get(), 700);

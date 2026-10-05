@@ -327,16 +327,13 @@ mod tests {
 
     #[test]
     fn question_accessors() {
-        let q = Question::choice("delivery", &["queue", "steer", "interrupt"]).unwrap();
-        assert_eq!(q.name().as_str(), "delivery");
+        let q = Question::choice("route", &["keep", "move", "stop"]).unwrap();
+        assert_eq!(q.name().as_str(), "route");
         assert_eq!(q.arity(), 3);
         let o = q.options().unwrap();
-        assert_eq!(o.index_of("steer"), Some(OptionIndex::new(1)));
+        assert_eq!(o.index_of("move"), Some(OptionIndex::new(1)));
         assert_eq!(o.index_of("nope"), None);
-        assert_eq!(
-            o.get(OptionIndex::new(2)).map(Label::as_str),
-            Some("interrupt")
-        );
+        assert_eq!(o.get(OptionIndex::new(2)).map(Label::as_str), Some("stop"));
         assert_eq!(o.get(OptionIndex::new(3)), None);
         assert_eq!(o.indices().count(), 3);
         assert!(!o.is_empty());

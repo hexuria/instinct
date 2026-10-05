@@ -41,7 +41,7 @@ pub use crate::protect::ProtectedKind;
 /// Largest accepted input (16 MiB). Larger inputs are refused rather than truncated.
 pub const MAX_INPUT_BYTES: usize = 16 * 1024 * 1024;
 
-/// Identifies the canonicalization algorithm and its Unicode data; packs fold it into
+/// Identifies the canonicalization algorithm and its Unicode data; consumers fold it into
 /// `DataVersion`. Kept in sync with `Cargo.lock` by a test.
 pub const ALGORITHM_TAG: &str =
     "pua-text-v1;unicode-normalization=0.1.25;unicode-segmentation=1.13.3;unicode-security=0.1.2";
@@ -96,11 +96,11 @@ pub enum PunctRuns {
     /// Keep them (`!!` stays `!!`).
     #[default]
     Keep,
-    /// Collapse to one (`!!!` → `!`). Declared as a symmetry by the autosteer pack (q14).
+    /// Collapse to one (`!!!` → `!`). For consumers whose punctuation runs carry no meaning.
     Collapse,
 }
 
-/// Canonicalization settings, chosen per pack.
+/// Canonicalization settings, chosen per consumer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct NormalizeConfig {
     /// Case fold.

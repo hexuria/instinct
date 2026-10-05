@@ -23,7 +23,7 @@ impl fmt::Display for DataVersionError {
 
 impl std::error::Error for DataVersionError {}
 
-/// A 256-bit digest identifying pack data, seeds, tags, profile table and crate version.
+/// A 256-bit digest identifying consumer data, seeds, tags, profile table and crate version.
 /// Rendered as 64 lowercase hex characters.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

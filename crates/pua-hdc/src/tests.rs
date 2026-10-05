@@ -333,7 +333,7 @@ fn nearest_margin_is_top_minus_runner_up() {
 
 #[test]
 fn resonator_iteration_counts_are_pinned() {
-    // Deterministic: the count is part of the behaviour (and of the trail a pack writes).
+    // Deterministic: the count is part of the behaviour (and of the trail a consumer writes).
     let a_names: Vec<String> = (0..8).map(|i| format!("intent{i}")).collect();
     let b_names: Vec<String> = (0..8).map(|i| format!("target{i}")).collect();
     let ab = book(&a_names.iter().map(String::as_str).collect::<Vec<_>>());
