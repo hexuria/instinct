@@ -121,6 +121,8 @@ fn rounds_and_stability() {
     let path = graph(5, &[(0, 1), (1, 2), (2, 3), (3, 4)]);
     let r0 = wl_refine(&path, Rounds::Fixed(0));
     assert_eq!((r0.rounds(), r0.classes()), (0, 1));
+    // A fixed request runs exactly that many rounds, even past stability.
+    assert_eq!(wl_refine(&path, Rounds::Fixed(7)).rounds(), 7);
     let stable = wl_refine(&path, Rounds::ToStability);
     // P5 refines to {ends}, {next}, {middle}: 3 classes, stable after 3 rounds (2 to refine,
     // 1 to confirm).
