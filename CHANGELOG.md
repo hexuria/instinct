@@ -9,3 +9,7 @@ to public types bumps MAJOR (MINOR while 0.x).
 ### Added
 - CI foundation: PR gate, nightly tier, mutants-diff, bench gate, release skeleton, cargo-deny,
   architecture check, Dependabot, CODEOWNERS.
+- `pua-core`: bounded scores, spans, `DataVersion`, questions/answers, `decide`, candidates,
+  profiles, trail, `Pack` trait.
+- `pua-explain`: replay records (schema 1), JSON lines, decision diff, trail rendering.
+- `pua-text`: canonicalization with original-span mapping (ADR 0006); cargo-fuzz crate.
