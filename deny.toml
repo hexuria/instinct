@@ -1,0 +1,57 @@
+# cargo-deny policy (spec §3.1, skill §8). Run: `cargo deny check`.
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+# Unmaintained crates are surfaced, not ignored: an advisory here must be fixed or written down
+# in docs/adr with a revisit date.
+unmaintained = "all"
+ignore = []
+
+[licenses]
+version = 2
+# Permissive only, matching opengrok-server deny.toml.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "CC0-1.0",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "Zlib",
+]
+confidence-threshold = 0.93
+unused-allowed-license = "allow"
+
+[licenses.private]
+ignore = true
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+highlight = "all"
+# Spec §3.1: no async runtime, web, DB, HTTP client, Jev SDK or opengrok crate in any PUA crate.
+# scripts/architecture.txt enforces the same list per crate (with the opengrok-* glob).
+deny = [
+    { crate = "tokio", reason = "PUA is sync and pure (spec §1 non-goals)" },
+    { crate = "axum", reason = "no web stack in PUA (spec §3.1)" },
+    { crate = "sqlx", reason = "no database in PUA (spec §3.1)" },
+    { crate = "reqwest", reason = "no network in PUA (spec §3.1)" },
+    { crate = "hyper", reason = "no network in PUA (spec §3.1)" },
+    { crate = "typesafe-sdk", reason = "pua-jev mirrors wire JSON only; the SDK is a network client (spec §3.1)" },
+    { crate = "opengrok-core", reason = "PUA must not depend on opengrok (spec §3.1)" },
+    { crate = "opengrok-server", reason = "PUA must not depend on opengrok (spec §3.1)" },
+    { crate = "opengrok-tools", reason = "PUA must not depend on opengrok (spec §3.1)" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
