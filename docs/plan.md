@@ -101,6 +101,7 @@ it must execute the golden replay journals.
 | 0006 | NFC by chunking at stable starters with a differential oracle; fold is `char::to_lowercase` (Unicode version pinned by the 1.99.0 toolchain and recorded in `DataVersion`) |
 | 0007 | Owner-decision defaults (q14, q15, q8, q5): case and punctuation runs are symmetries for autosteer; label diacritics are NOT folded in ocr-labels; WL `h = 3`; sample catalogs only; no TIN checksum |
 | 0008 | Interrupt never auto-applies, expressed as a type (`AutoApply`) |
+| 0009 | Jev adapter: one float boundary (`convert.rs`), score levels matched by label not rung, off-menu guard on labels and probability keys, noul drift check, labelled fallback (`FallbackWhy`) |
 
 ## Plan review
 
