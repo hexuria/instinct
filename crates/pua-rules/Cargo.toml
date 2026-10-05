@@ -1,0 +1,12 @@
+[package]
+name = "pua-rules"
+description = "PUA (Predictable Universal Advisor): compiled rule packs: cues, negation, scope; no regex in rule data."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

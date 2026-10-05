@@ -1,0 +1,12 @@
+[package]
+name = "pua-pack-autosteer"
+description = "PUA (Predictable Universal Advisor): autosteer pack: queue / steer / interrupt delivery advice."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,12 @@
+[package]
+name = "pua-pack-bir-fields"
+description = "PUA (Predictable Universal Advisor): BIR fields pack: format-repair and catalog suggestions, never TIN validity."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,4 @@
+# Owner rule: hexuria repos pin Rust 1.99.0.
+[toolchain]
+channel = "1.99.0"
+components = ["rustfmt", "clippy"]

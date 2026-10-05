@@ -1,0 +1,12 @@
+[package]
+name = "pua-graph"
+description = "PUA (Predictable Universal Advisor): labeled graphs and 1-WL colour refinement fingerprints."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
