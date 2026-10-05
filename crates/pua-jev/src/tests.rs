@@ -499,3 +499,19 @@ fn error_texts_are_distinct() {
         "asked a noul question, got a score answer"
     );
 }
+
+#[test]
+fn wire_choice_labels_and_convert_texts() {
+    let bare: AskedChoice = serde_json::from_value(json!("queue")).unwrap();
+    let described: AskedChoice =
+        serde_json::from_value(json!({"label": "steer", "means": "nudge the run"})).unwrap();
+    assert_eq!((bare.label(), described.label()), ("queue", "steer"));
+    assert_eq!(
+        ConvertError::NonFinite.to_string(),
+        "probability is not finite"
+    );
+    assert_eq!(
+        ConvertError::OutOfRange.to_string(),
+        "probability is outside [0, 1]"
+    );
+}
