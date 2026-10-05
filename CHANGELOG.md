@@ -18,3 +18,4 @@ to public types bumps MAJOR (MINOR while 0.x).
 - `pua-hdc`: packed hypervectors, seeded encoder, codebook decode, resonator; measured capacity table.
 - `pua-graph`: 1-WL fingerprints with per-node colours; optional `spd-wl`.
 - `pua-jev`: Jev wire shapes, one float boundary, off-menu guard, labelled escalation fallback.
+- `pua-pack-autosteer`: delivery advice (queue/steer/interrupt) with typed AutoApply::Never.
