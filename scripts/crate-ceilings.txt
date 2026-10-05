@@ -1,0 +1,3 @@
+# Max lines of Rust under <crate>/src per crate (spec §3.1). Raise a ceiling only in a PR that
+# says why; splitting the crate is usually the better answer.
+default 8000

@@ -1,0 +1,30 @@
+# Dependency direction for hexuria/pua (spec §3.1).
+#
+# Format:
+#   <crate>: <allowed pua-* deps, space separated>
+#       | <banned crates anywhere in the crate's dependency closure; `*` is a glob>
+#
+# Checked by scripts/check_architecture.py in CI:
+#   1. every workspace member has an entry (new crates must declare their direction);
+#   2. a crate's normal and build dependencies on workspace crates are a subset of "allowed";
+#   3. no banned crate appears anywhere in its resolved dependency closure (incl. dev-deps).
+# `pua-pack-*` is a pattern entry that applies to every pack crate.
+
+pua-core:
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-text: pua-core
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-lexicon: pua-core pua-text
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-rules: pua-core pua-text pua-lexicon
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-hdc: pua-core
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-graph: pua-core
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-explain: pua-core
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-jev: pua-core
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
+pua-pack-*: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph pua-explain
+    | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
