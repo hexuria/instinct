@@ -25,8 +25,8 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | 12 | [#13](https://github.com/hexuria/pua/pull/13) | `gateway` | `main` | T11 pua-pack-gateway-shape | merged (ecbe60a) |
 | 13 | [#14](https://github.com/hexuria/pua/pull/14) | `bir` | `main` | T12 pua-pack-bir-fields | merged (3316f11) |
 | 14 | [#15](https://github.com/hexuria/pua/pull/15) | `ocr-labels` | `main` | T13 pua-pack-ocr-labels | merged (87ec58f) |
-| 15 | [#16](https://github.com/hexuria/pua/pull/16) | `tool-selection` | `main` | T14 pua-pack-tool-selection | open |
-| 16 | (pending) | `benches` | `tool-selection` | T15–T17 benches, fuzz docs, review-report | local |
+| 15 | [#16](https://github.com/hexuria/pua/pull/16) | `tool-selection` | `main` | T14 pua-pack-tool-selection | merged (a097137) |
+| 16 | [#17](https://github.com/hexuria/pua/pull/17) | `benches` | `main` | T15–T17 benches, fuzz docs, review-report | open |
 
 
 ## Done
@@ -90,7 +90,7 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 
 ## Next
 
-- Merge #14–#16; open benches PR (T15–T17 tip).
+- Land #17 (T15–T17); main then holds T0–T17.
 
 ## Known constraints
 

@@ -6,6 +6,8 @@
 # Both runs share one target dir and one runner, back to back (old then new), which removes
 # cross-machine noise. Callgrind Ir is deterministic for a fixed binary, so the limit can be tight.
 # gungraun exits 3 on a limit breach, which fails the job.
+#
+# Always pass `--bench paths` so cargo does not feed gungraun flags to the crate's lib test harness.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 base="${1:?base ref}"
@@ -16,13 +18,17 @@ export GUNGRAUN_HOME="$CARGO_TARGET_DIR/gungraun"
 has_benches() { [[ -f "$1/benches/Cargo.toml" ]]; }
 if ! has_benches .; then echo "bench: no benches/ crate yet, skipping"; exit 0; fi
 
+run_paths() {
+  cargo bench -p pua-benches --bench paths --locked -- "$@"
+}
+
 wt="$(mktemp -d)/base"
 cleanup() { git worktree remove --force "$wt" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 if git worktree add --detach "$wt" "$base" >/dev/null 2>&1 && has_benches "$wt"; then
-  (cd "$wt" && cargo bench -p pua-benches --locked -- --save-baseline=base)
-  cargo bench -p pua-benches --locked -- --baseline=base --callgrind-limits="$limit"
+  (cd "$wt" && cargo bench -p pua-benches --bench paths --locked -- --save-baseline=base)
+  run_paths --baseline=base --callgrind-limits="$limit"
 else
   echo "bench: base $base has no benches/ crate; recording HEAD only (no gate this run)"
-  cargo bench -p pua-benches --locked -- --save-baseline=head
+  run_paths --save-baseline=head
 fi
