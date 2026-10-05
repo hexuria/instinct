@@ -116,9 +116,18 @@ version = "0.0.0"
 dependencies = [
  "libfuzzer-sys",
  "pua-core",
+ "pua-graph",
  "pua-lexicon",
  "pua-rules",
  "pua-text",
+]
+
+[[package]]
+name = "pua-graph"
+version = "0.0.0"
+dependencies = [
+ "blake3",
+ "pua-core",
 ]
 
 [[package]]

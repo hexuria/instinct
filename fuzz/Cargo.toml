@@ -16,6 +16,7 @@ members = ["."]
 [dependencies]
 libfuzzer-sys = "0.4"
 pua-core = { path = "../crates/pua-core" }
+pua-graph = { path = "../crates/pua-graph", features = ["spd-wl"] }
 pua-lexicon = { path = "../crates/pua-lexicon" }
 pua-rules = { path = "../crates/pua-rules" }
 pua-text = { path = "../crates/pua-text" }
@@ -37,6 +38,13 @@ bench = false
 [[bin]]
 name = "rules_match"
 path = "fuzz_targets/rules_match.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "graph_from_bytes"
+path = "fuzz_targets/graph_from_bytes.rs"
 test = false
 doc = false
 bench = false
