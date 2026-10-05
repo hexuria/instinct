@@ -17,6 +17,7 @@ members = ["."]
 libfuzzer-sys = "0.4"
 pua-core = { path = "../crates/pua-core" }
 pua-lexicon = { path = "../crates/pua-lexicon" }
+pua-rules = { path = "../crates/pua-rules" }
 pua-text = { path = "../crates/pua-text" }
 
 [[bin]]
@@ -29,6 +30,13 @@ bench = false
 [[bin]]
 name = "lexicon_lookup"
 path = "fuzz_targets/lexicon_lookup.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "rules_match"
+path = "fuzz_targets/rules_match.rs"
 test = false
 doc = false
 bench = false

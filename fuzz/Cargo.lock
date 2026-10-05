@@ -117,6 +117,7 @@ dependencies = [
  "libfuzzer-sys",
  "pua-core",
  "pua-lexicon",
+ "pua-rules",
  "pua-text",
 ]
 
@@ -125,6 +126,15 @@ name = "pua-lexicon"
 version = "0.0.0"
 dependencies = [
  "pua-core",
+ "pua-text",
+]
+
+[[package]]
+name = "pua-rules"
+version = "0.0.0"
+dependencies = [
+ "pua-core",
+ "pua-lexicon",
  "pua-text",
 ]
 
