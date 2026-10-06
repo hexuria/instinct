@@ -155,3 +155,40 @@ impl Answer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn i(v: u16) -> OptionIndex {
+        OptionIndex::new(v)
+    }
+
+    fn c(v: i16) -> Confidence {
+        Confidence::new(v).unwrap()
+    }
+
+    #[test]
+    fn ranked_try_from_rejects_non_canonical_orders() {
+        let err = "ranked list must be sorted by confidence desc, index asc, with unique indices";
+        // A duplicated index is not canonical even when the confidences sort.
+        assert_eq!(
+            Ranked::try_from(vec![(i(0), c(500)), (i(0), c(400))]),
+            Err(err)
+        );
+        // Equal confidences must rank the lower index first.
+        assert_eq!(
+            Ranked::try_from(vec![(i(1), c(500)), (i(0), c(500))]),
+            Err(err)
+        );
+        // Ascending confidence is not canonical.
+        assert_eq!(
+            Ranked::try_from(vec![(i(0), c(400)), (i(1), c(500))]),
+            Err(err)
+        );
+        // The same pairs in canonical order pass; an empty list is canonical.
+        assert!(Ranked::try_from(vec![(i(0), c(500)), (i(1), c(400))]).is_ok());
+        assert!(Ranked::try_from(vec![(i(0), c(500)), (i(1), c(500))]).is_ok());
+        assert!(Ranked::try_from(vec![]).is_ok());
+    }
+}

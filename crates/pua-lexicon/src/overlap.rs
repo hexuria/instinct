@@ -95,6 +95,15 @@ mod tests {
     }
 
     #[test]
+    fn confusable_candidate_words_dilute_the_denominator() {
+        // The candidate's confusable words still count as "wanted" (they are real
+        // text on the candidate side) but can never match the query's free words,
+        // so a lookalike in the candidate lowers the score without blocking it.
+        assert_eq!(ov("alpha beta", "alpha \u{430}eta"), 500);
+        assert_eq!(ov("alpha beta", "\u{430}lpha \u{430}eta"), 0);
+    }
+
+    #[test]
     fn config_mismatch_is_an_error() {
         let a = NormalizeConfig::default();
         let b = NormalizeConfig {

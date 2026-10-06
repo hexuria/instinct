@@ -677,4 +677,36 @@ mod tests {
         }
         assert_eq!(Fold::AsciiLower.name(), "ascii_lower");
     }
+
+    #[test]
+    fn sentence_boundaries_are_terminal_punct_then_canonical_space() {
+        let count = |s: &str| {
+            normalize(s, NormalizeConfig::default())
+                .unwrap()
+                .sentence_count()
+        };
+        // Terminal punct inside a word does not break a sentence.
+        assert_eq!(count("a!b c"), 1);
+        assert_eq!(count("a.b c"), 1);
+        assert_eq!(count("a. b"), 2);
+        assert_eq!(count("a! b"), 2);
+        assert_eq!(count("a? b"), 2);
+        // Any whitespace breaks: canonical whitespace is already a single space.
+        assert_eq!(count("a.\tb"), 2);
+        assert_eq!(count("a.\n\nb"), 2);
+        // Terminal punct at the end of input is a single sentence.
+        assert_eq!(count("a."), 1);
+        // Abbreviations are not detected: `e.g.` splits like any other `. `.
+        assert_eq!(count("e.g. case"), 2);
+    }
+
+    #[test]
+    fn ligatures_flag_as_homoglyph_with_ascii_skeleton() {
+        // U+FB02 'ﬂ' folds into "flag": a lookalike that is not mixed-script.
+        let n = normalize("the \u{fb02}ag is up", NormalizeConfig::default()).unwrap();
+        let t = &n.tokens()[1];
+        assert_eq!(n.token_text(t), "\u{fb02}ag");
+        assert_eq!(t.confusable(), Some(Confusable::Homoglyph));
+        assert_eq!(t.ascii_skeleton(), Some("flag"));
+    }
 }

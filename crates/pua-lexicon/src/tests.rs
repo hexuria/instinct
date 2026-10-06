@@ -398,6 +398,18 @@ fn hit_token_ranges() {
 }
 
 #[test]
+fn repairs_only_apply_to_single_token_terms() {
+    // "never mind" is a two-token term, so it is not in the SymSpell index:
+    // "mnid" is never repaired into "mind", even at edit distance 1.
+    let lex = build(&[("never mind", "i")]);
+    assert_eq!(scan(&lex, "never mnid"), []);
+    assert_eq!(scan(&lex, "mnid"), []);
+    // A single-token term at the same typo does repair.
+    let lex = build(&[("mind", "i")]);
+    assert_eq!(scan(&lex, "mnid"), [("mind".into(), "mnid".into(), rep(1))]);
+}
+
+#[test]
 fn mutants_survivors_pinned() {
     // EntryId values follow term order.
     let lex = build(&[("stop", "i"), ("cancel", "c")]);

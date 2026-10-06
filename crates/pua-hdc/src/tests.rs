@@ -392,3 +392,76 @@ fn resonator_needs_both_estimates_unchanged() {
     assert!(iterations >= 2, "{iterations}");
     assert_eq!(bb.id(b.index), "t1");
 }
+
+#[test]
+fn component_and_permute_wrap_at_the_dimension() {
+    // Indexing and rotating reduce mod BITS: a whole turn is the identity.
+    let v = hv("x");
+    assert_eq!(v.component(D1024::BITS), v.component(0));
+    assert_eq!(v.component(2 * D1024::BITS + 3), v.component(3));
+    assert_eq!(v.permute(D1024::BITS), v);
+    assert_eq!(v.permute(D1024::BITS + 7), v.permute(7));
+}
+
+#[test]
+fn bundle_of_nothing_is_all_plus_one() {
+    // Every sum stays at zero on an empty bundle, and the zero → +1 tie makes it
+    // equal to Hv::ones().
+    assert_eq!(bundle::<D1024>(&[]), Hv::ones());
+}
+
+#[test]
+fn add_saturates_each_weighted_component() {
+    // weight·±1 saturates in i32: +1 components floor at i32::MIN, −1 components
+    // ceiling at i32::MAX (saturating_neg of i32::MIN is i32::MAX — asymmetric).
+    let v = hv("x");
+    let mut acc = Accumulator::new();
+    acc.add(&v, i32::MIN);
+    let sums = acc.sums();
+    for i in 0..D1024::BITS {
+        assert_eq!(
+            sums[i as usize],
+            if v.component(i) == 1 {
+                i32::MIN
+            } else {
+                i32::MAX
+            },
+            "component {i}"
+        );
+    }
+}
+
+#[test]
+fn one_entry_margin_is_sim_plus_1000_clamped() {
+    // `best_two` plays a virtual second best at −1000, so a single-entry book
+    // reports margin = min(similarity + 1000, 1000).
+    let b = Codebook::new([("only".to_owned(), hv("only"))]).unwrap();
+    let same = b.nearest(&hv("only"));
+    assert_eq!((same.similarity.get(), same.margin.get()), (1000, 1000));
+    let far = b.nearest(&hv("zz"));
+    assert_eq!(far.margin.get(), (far.similarity.get() + 1000).min(1000));
+}
+
+#[test]
+fn decode_caps_k_at_the_book_and_zero_accumulator_scores_zero() {
+    let b = book(&["a", "b", "c"]);
+    let mut acc = Accumulator::new();
+    acc.add(&hv("a"), 1);
+    // k > len returns every entry once, still sorted best-first with index ties.
+    let got = b.decode(&acc, 100, Millis::MIN);
+    assert_eq!(
+        got.iter()
+            .map(|&(i, s)| (b.id(i), s.get()))
+            .collect::<Vec<_>>(),
+        vec![("a", 1000), ("b", 0), ("c", 0)]
+    );
+    // A zero accumulator scores every entry 0, ties broken by index.
+    let zero: Accumulator<D1024> = Accumulator::new();
+    let got = b.decode(&zero, 2, Millis::MIN);
+    assert_eq!(
+        got.iter()
+            .map(|&(i, s)| (b.id(i), s.get()))
+            .collect::<Vec<_>>(),
+        vec![("a", 0), ("b", 0)]
+    );
+}
