@@ -18,6 +18,8 @@ pub enum StageKind {
     Graph,
     /// Hypervector similarity, cleanup, resonator.
     Hdc,
+    /// Drive-modulated arbitration (spec §4.10).
+    Instinct,
     /// Thresholds, margin, abstain.
     Decide,
     /// Escalation or a caller-declared fallback (spec §8).

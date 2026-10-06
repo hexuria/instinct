@@ -27,6 +27,8 @@ over the classic-projects deprecation) and rebased with `git rebase --onto origi
 | 14 | [#15](https://github.com/hexuria/instinct/pull/15) | `ocr-labels` | `main` | T13 instinct-ocr | merged (87ec58f) |
 | 15 | [#16](https://github.com/hexuria/instinct/pull/16) | `tool-selection` | `main` | T14 instinct-toolbox | merged (a097137) |
 | 16 | [#17](https://github.com/hexuria/instinct/pull/17) | `benches` | `main` | T15–T17 benches, fuzz docs, review-report | merged (727ab99) |
+| 17 | [#27](https://github.com/hexuria/pua/pull/27) | `devin/1791264973-rename-instinct` | `main` | PUA → Instinct project rename | merged (8373274) |
+| 18 | [#28](https://github.com/hexuria/pua/pull/28) | `devin/1791265555-instinct-arbitrate` | `main` | T18 instinct arbitration, ADR 0011 | open |
 
 
 ## Done
