@@ -34,6 +34,14 @@ Selection is deterministic and has no stochastic component.
 Consumers using `arbitrate` fold `INSTINCT_TAG` into their own `DataVersion`. Consumers that do not
 use arbitration have no `DataVersion` change.
 
+## Alternatives considered
+
+- **Sum** (drives blend additively) was rejected as less explainable because no single drive owns the
+  decision; max matches “the dominant drive wins”.
+- **A separate `instinct-arbitrate` crate** was rejected by owner decision because arbitration is a
+  roughly one-file extension of the core gate with no new dependencies.
+- **Stochastic / softmax selection** was rejected because it breaks determinism (AGENTS rule 2).
+
 ## Consequences
 
 - Max dominance makes one drive control each option's drive pull; ties select the lowest drive index.

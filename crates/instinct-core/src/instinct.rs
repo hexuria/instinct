@@ -94,6 +94,20 @@ impl Drives {
     pub fn get(&self, index: DriveIndex) -> Option<&Drive> {
         self.0.get(usize::from(index.get()))
     }
+
+    /// Finds a drive by its exact, case-sensitive name.
+    pub fn index_of(&self, name: &str) -> Option<DriveIndex> {
+        self.0
+            .iter()
+            .position(|drive| drive.name.as_str() == name)
+            .and_then(|index| u8::try_from(index).ok())
+            .map(DriveIndex)
+    }
+
+    /// Drives in their declared order.
+    pub fn drives(&self) -> &[Drive] {
+        &self.0
+    }
 }
 
 /// Drive-by-option affinity weights for one question and one drive count.
@@ -412,7 +426,9 @@ pub fn arbitrate<'q>(
             }
         })?;
         persisted = Some(index);
-        persisted_bonus = Some(thresholds.min_margin);
+        persisted_bonus = Some(Confidence::saturating(
+            i32::from(persisted_urge.get()) - i32::from(raw_urge.get()),
+        ));
     }
 
     Ok(Arbitration {
@@ -773,6 +789,10 @@ mod tests {
                 ..
             } if *chosen == option(0) && *confidence == Confidence::MAX
         ));
+        assert_eq!(
+            result.trail_records(&drives).last().unwrap().text(),
+            "persist incumbent +50"
+        );
     }
 
     #[test]
@@ -921,6 +941,30 @@ mod tests {
             .unwrap();
         assert_eq!(affinity.get(drive_index, option(0)), Some(confidence(500)));
         assert_eq!(affinity.get(drive_index, option(2)), None);
+    }
+
+    #[test]
+    fn drives_index_of_matches_exact_names() {
+        let drives =
+            Drives::new(&[("goal", confidence(700)), ("threat", confidence(800))]).unwrap();
+        assert_eq!(drives.index_of("goal"), Some(DriveIndex::new(0)));
+        assert_eq!(drives.index_of("threat"), Some(DriveIndex::new(1)));
+        assert_eq!(drives.index_of("Goal"), None);
+        assert_eq!(drives.index_of("missing"), None);
+    }
+
+    #[test]
+    fn drives_accessor_preserves_declared_order() {
+        let drives =
+            Drives::new(&[("goal", confidence(700)), ("threat", confidence(800))]).unwrap();
+        assert_eq!(
+            drives
+                .drives()
+                .iter()
+                .map(|drive| drive.name().as_str())
+                .collect::<Vec<_>>(),
+            vec!["goal", "threat"]
+        );
     }
 
     #[test]
