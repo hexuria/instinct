@@ -210,4 +210,18 @@ mod tests {
         assert_eq!(ScorerKind::Sum.name(), "sum");
         assert_eq!(ScorerKind::Max.name(), "max");
     }
+
+    #[test]
+    fn step_numbers_saturate_at_u16_max() {
+        let mut t = Trail::new();
+        for _ in 0..usize::from(u16::MAX) + 2 {
+            t.push(TrailRecord::new(StageKind::Normalize, "x"));
+        }
+        let rs = t.records();
+        assert_eq!(rs.len(), usize::from(u16::MAX) + 2);
+        // Steps are 1-based; every record past the first 65534 keeps step u16::MAX.
+        assert_eq!(rs[usize::from(u16::MAX) - 1].step(), u16::MAX);
+        assert_eq!(rs[usize::from(u16::MAX)].step(), u16::MAX);
+        assert_eq!(rs[usize::from(u16::MAX) + 1].step(), u16::MAX);
+    }
 }

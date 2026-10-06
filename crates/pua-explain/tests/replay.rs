@@ -157,6 +157,71 @@ fn record_accessors() {
     assert!(matches!(d.answer(), Answer::Choice { .. }));
 }
 
+#[test]
+fn records_tolerate_unknown_json_fields() {
+    // ReplayRecord has no deny_unknown_fields: a consumer's extra fields are
+    // ignored at ingest (contrast: the lexicon/rules spec types reject them).
+    let golden = include_str!("fixtures/replay_v1.jsonl").trim_end();
+    let with_extra = golden.replacen('{', "{\"tool\":\"pua\",", 1);
+    let rec: ReplayRecord<Input> = ReplayRecord::from_json_line(&with_extra).unwrap();
+    assert_eq!(rec.input(), &input());
+    // Re-emitting drops the unknown field: the line is canonical again.
+    assert_eq!(rec.to_json_line().unwrap(), golden);
+    // The schema check still runs before the input hash check.
+    let both_bad = golden
+        .replacen("\"schema\":1", "\"schema\":2", 1)
+        .replace("please stop now", "please stop NOW");
+    assert_eq!(
+        ReplayRecord::<Input>::from_json_line(&both_bad),
+        Err(ExplainError::SchemaMismatch {
+            found: 2,
+            expected: 1
+        })
+    );
+}
+
+#[test]
+fn check_diverges_on_an_answer_change() {
+    let i = input();
+    let rec = ReplayRecord::new(i.clone(), toy_pack(&i, "toy-v1")).unwrap();
+    // Same data version and profile, different scores: the diff isolates the
+    // answer pair (plus the trail, which mentions the picked option).
+    let rerun = |x: &Input| {
+        let _ = x;
+        let q = Question::choice("delivery", &["queue", "steer", "interrupt"]).unwrap();
+        let mut s = Scores::new(&q);
+        s.set(OptionIndex::new(1), Confidence::new(900).unwrap())
+            .unwrap();
+        let mut trail = Trail::new();
+        trail.push(TrailRecord::new(StageKind::Decide, "rerun"));
+        Decision::new(
+            decide(&s, Profile::Standard),
+            Profile::Standard,
+            DataVersion::builder("toy-v1").finish(),
+            trail,
+        )
+    };
+    let ReplayCheck::Diverged(d) = rec.check(rerun).unwrap() else {
+        panic!("the answer moved, must diverge");
+    };
+    assert!(d.answer.is_some());
+    assert!(d.data_version.is_none() && d.profile.is_none() && d.trail_changed);
+}
+
+#[test]
+fn render_formats_bare_and_signed_records() {
+    // A bare record renders `step stage text`; a signed contribution renders
+    // `±N`, and a zero contribution is omitted.
+    let mut t = Trail::new();
+    t.push(TrailRecord::new(StageKind::Normalize, "canonical"));
+    t.push(TrailRecord::new(StageKind::Rules, "cue").millis(Millis::new(-150).unwrap()));
+    t.push(TrailRecord::new(StageKind::Decide, "done").millis(Millis::ZERO));
+    assert_eq!(
+        render_trail(&t),
+        " 1 normalize  canonical\n 2 rules      -150 cue\n 3 decide     done\n"
+    );
+}
+
 proptest! {
     #[test]
     fn round_trip_is_identity(msg in "\\PC{0,64}", runs in prop::collection::vec("[a-z_]{1,8}", 0..4)) {

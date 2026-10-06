@@ -630,3 +630,124 @@ fn mutants_survivors_pinned() {
     let rs = set(&base());
     assert_eq!(scores(&rs, "stop `abcdefgh`x !!!!?"), [350, 0, 0]);
 }
+
+fn lexicon(terms: &[&str]) -> Lexicon {
+    Lexicon::new(
+        &LexiconSpec {
+            entries: terms.iter().map(|t| EntrySpec::new(t, "x")).collect(),
+            guards: vec![],
+            repair: Repair::Typos {
+                penalty_per_edit: Confidence::new(150).unwrap(),
+            },
+        },
+        NormalizeConfig::default(),
+    )
+    .unwrap()
+}
+
+fn repairs<'a>(lex: &Lexicon, rs: &RuleSet, text: &'a str) -> (Normalized<'a>, Repairs) {
+    let n = normalize(text, rs.config()).unwrap();
+    let rep = Repairs::from_lookup(lex, &lex.lookup(&n).unwrap());
+    (n, rep)
+}
+
+fn scores_with_repairs(rs: &RuleSet, lex: &Lexicon, text: &str) -> Vec<i16> {
+    let (n, rep) = repairs(lex, rs, text);
+    rs.score(&n, &rep)
+        .unwrap()
+        .scores()
+        .iter()
+        .map(|c| c.get())
+        .collect()
+}
+
+#[test]
+fn identical_ranges_do_not_suppress_each_other() {
+    // A more specific match suppresses a bare one only when the ranges differ;
+    // two rules matching the same tokens count both.
+    let rs = set(&with(|s| {
+        s.rules.push(rule("steer.stop.v1", "steer", "stop", 600));
+    }));
+    assert_eq!(scores(&rs, "stop"), [700, 600, 0]);
+    assert_eq!(MatchStatus::Suppressed.name(), "suppressed");
+}
+
+#[test]
+fn question_halves_before_the_repair_penalty() {
+    // The damper halves the weight first, then the whole repair penalty comes
+    // off: halve(700) − 150 = 200, not (700 − 150)/2 = 275.
+    let rs = set(&base());
+    let lex = lexicon(&["stop"]);
+    assert_eq!(scores_with_repairs(&rs, &lex, "stpo?"), [200, 0, 0]);
+    let (n, rep) = repairs(&lex, &rs, "stpo?");
+    let out = rs.score(&n, &rep).unwrap();
+    let m = &out.matches()[0];
+    assert_eq!(
+        (m.question(), m.repair_penalty().get(), m.effective().get()),
+        (true, 150, 200)
+    );
+}
+
+#[test]
+fn repaired_tokens_fill_slots_and_penalties_sum() {
+    // "stpo usig" repairs to "stop using": the repaired "using" satisfies the
+    // {gerund} slot, so the bare "stop" is suppressed and both repair penalties
+    // subtract: 650 − (150 + 150) = 350.
+    let rs = set(&base());
+    let lex = lexicon(&["stop", "using"]);
+    assert_eq!(scores_with_repairs(&rs, &lex, "stpo usig"), [0, 350, 0]);
+}
+
+#[test]
+fn repairs_apply_to_patterns_but_not_to_negators() {
+    // Rule literals and slots see the repaired word; negators match the raw
+    // canonical text only. Same repair, opposite visibility.
+    let lex = lexicon(&["stop", "don't", "panic"]);
+    let rs = set(&base());
+    // "dont" repairs to "don't", yet it does not negate "stop".
+    assert_eq!(scores_with_repairs(&rs, &lex, "dont stop"), [700, 0, 0]);
+    // But a "don't panic" rule does match "dont panic" (minus the penalty).
+    let rs = set(&with(|s| {
+        s.rules.push(rule(
+            "interrupt.dont_panic.v1",
+            "interrupt",
+            "don't panic",
+            800,
+        ));
+    }));
+    assert_eq!(scores_with_repairs(&rs, &lex, "dont panic"), [650, 0, 0]);
+    // An exact-only lookup carries no repairs at all.
+    let (n, rep) = repairs(&lex, &rs, "stop");
+    assert_eq!(rep, Repairs::none());
+    assert!(n.tokens().iter().all(|t| t.confusable().is_none()));
+}
+
+#[test]
+fn a_sentence_break_inside_protected_code_ends_negation() {
+    // ". " splits sentences even inside a protected span: the negator ends up in
+    // a different sentence than the cue, so it cannot negate it.
+    let rs = set(&base());
+    assert_eq!(scores(&rs, "don't `x. y` stop"), [700, 0, 0]);
+    // Same token layout without the break: the negator reaches "stop".
+    assert_eq!(scores(&rs, "don't `xx yy` stop"), [0, 0, 0]);
+}
+
+#[test]
+fn question_mark_outside_protected_code_damps() {
+    // `?` inside the span is protected text and does not damp; `?` right after
+    // the closing backtick counts as a question.
+    let rs = set(&base());
+    assert_eq!(scores(&rs, "stop `x?`"), [700, 0, 0]);
+    assert_eq!(scores(&rs, "stop `x`?"), [350, 0, 0]);
+}
+
+#[test]
+fn word_slot_accepts_confusable_but_literals_and_gerund_do_not() {
+    // {word} only requires a free token, so a confusable fills it; {gerund} and
+    // literals go through the repaired-words view where confusable tokens are
+    // absent, so they can never match one.
+    let rs = set(&base());
+    assert_eq!(scores(&rs, "switch to \u{455}top"), [0, 600, 0]);
+    // A confusable "-ing" word cannot suppress bare "stop" via stop {gerund}.
+    assert_eq!(scores(&rs, "stop \u{455}tarting"), [700, 0, 0]);
+}

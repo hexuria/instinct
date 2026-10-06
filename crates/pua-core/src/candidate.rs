@@ -195,6 +195,25 @@ mod tests {
     }
 
     #[test]
+    fn index_of_is_unaddressable_past_u16_max() {
+        // A set may hold more than 65536 ids, but an OptionIndex can only name the
+        // first 65536 — ids past that sort into the set yet cannot be addressed.
+        let ids: Vec<CandidateId> = (0..=usize::from(u16::MAX))
+            .map(|i| id(&format!("id_{i:05}")))
+            .collect();
+        let s = CandidateSet::new(ids).unwrap();
+        assert_eq!(s.len(), usize::from(u16::MAX) + 1);
+        assert_eq!(s.index_of("id_00000"), Some(OptionIndex::new(0)));
+        assert_eq!(s.index_of("id_65535"), Some(OptionIndex::new(u16::MAX)));
+        // The last id is a member but has no representable index.
+        assert_eq!(s.index_of("id_65536"), None);
+        assert_eq!(
+            s.question("q"),
+            Err(QuestionError::TooManyOptions(usize::from(u16::MAX) + 1))
+        );
+    }
+
+    #[test]
     fn chosen_is_none_on_abstain() {
         use crate::{AbstainReason, Confidence, Profile, Scores, abstain, decide};
         let s = CandidateSet::new([id("a"), id("b")]).unwrap();

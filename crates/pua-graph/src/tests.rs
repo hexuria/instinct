@@ -175,3 +175,35 @@ fn label_of_is_stable_and_length_prefixed() {
     assert_ne!(label_of(&[b"ab", b"c"]), label_of(&[b"a", b"bc"]));
     assert_ne!(label_of(&[b"x"]), u64::MAX);
 }
+
+#[test]
+fn fingerprint_records_the_requested_rounds_not_just_the_rounds_run() {
+    // On an already-stable graph both policies run exactly one round and produce
+    // identical colours — only the `requested` bytes differ.
+    let mut g = LabeledGraph::new();
+    g.add_node(0).unwrap();
+    g.add_node(0).unwrap();
+    let fixed = wl_refine(&g, Rounds::Fixed(1));
+    let stable = wl_refine(&g, Rounds::ToStability);
+    assert_eq!((fixed.rounds(), stable.rounds()), (1, 1));
+    assert_eq!(fixed.colours(), stable.colours());
+    assert_ne!(fixed.fingerprint(), stable.fingerprint());
+}
+
+#[cfg(feature = "spd-wl")]
+#[test]
+fn spd_wl_erases_edge_direction() {
+    // Distances are computed over the underlying undirected graph: a→b→c and
+    // a—b—c refine to the same fingerprint under spd-wl, while 1-WL still sees
+    // the direction.
+    let mut d = LabeledGraph::new();
+    let v: Vec<NodeId> = (0..3).map(|_| d.add_node(0).unwrap()).collect();
+    d.add_edge(v[0], v[1], Edge::directed()).unwrap();
+    d.add_edge(v[1], v[2], Edge::directed()).unwrap();
+    let u = graph(3, &[(0, 1), (1, 2)]);
+    assert_eq!(
+        spd_wl_refine(&d, Rounds::default()).fingerprint(),
+        spd_wl_refine(&u, Rounds::default()).fingerprint()
+    );
+    assert_ne!(wl_refine(&d, Rounds::default()).fingerprint(), fp(&u));
+}
