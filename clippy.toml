@@ -8,9 +8,9 @@ disallowed-types = [
     { path = "std::collections::HashSet", reason = "iteration order is unspecified; use BTreeSet or a sorted Vec (spec §5 rule 3)" },
 ]
 disallowed-methods = [
-    { path = "std::time::SystemTime::now", reason = "no clocks in PUA (spec §5 rule 3)" },
-    { path = "std::time::Instant::now", reason = "no clocks in PUA (spec §5 rule 3)" },
-    { path = "std::env::var", reason = "no environment reads in PUA (spec §5 rule 3)" },
-    { path = "std::env::var_os", reason = "no environment reads in PUA (spec §5 rule 3)" },
-    { path = "std::env::vars", reason = "no environment reads in PUA (spec §5 rule 3)" },
+    { path = "std::time::SystemTime::now", reason = "no clocks in Instinct(spec §5 rule 3)" },
+    { path = "std::time::Instant::now", reason = "no clocks in Instinct(spec §5 rule 3)" },
+    { path = "std::env::var", reason = "no environment reads in Instinct(spec §5 rule 3)" },
+    { path = "std::env::var_os", reason = "no environment reads in Instinct(spec §5 rule 3)" },
+    { path = "std::env::vars", reason = "no environment reads in Instinct(spec §5 rule 3)" },
 ]

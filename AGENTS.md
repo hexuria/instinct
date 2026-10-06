@@ -1,4 +1,4 @@
-# AGENTS.md: working rules for hexuria/pua
+# AGENTS.md: working rules for hexuria/instinct
 
 Humans and coding agents follow the same rules. The quality bar is the impeccable-rust checklist
 (see CONTRIBUTING.md); the semantics are docs/spec.md; the task list is docs/plan.md; where work
@@ -27,7 +27,7 @@ stands is docs/progress.md.
 > Any change to observable semantics names the verification boundary it affects.
 
 - Concurrency, interleaving, scheduling, retry, cancellation, recovery, ownership, or liveness
-  updates the system model, or the change states why that model is unaffected. (PUA has none
+  updates the system model, or the change states why that model is unaffected. (Instinct has none
   today: every call is sync and pure, so no system model exists. Introducing one of these is an
   architecture change that must update docs/plan.md "Verification architecture" first.)
 - Executable Rust behavior updates the Rust verification layer (unit, property, golden replay,

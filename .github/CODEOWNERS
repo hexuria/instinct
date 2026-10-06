@@ -1,10 +1,10 @@
-# PUA is a domain-agnostic engine (ADR 0010): there are no domain packs here to own. Domain data
+# Instinct is a domain-agnostic engine (ADR 0010): there are no domain packs here to own. Domain data
 # (lexicons, rules, labels, codebooks) is reviewed in each consumer repo.
 # @hexuria is the only collaborator today (an owner listed here must have write access, or GitHub
 # ignores the line).
 *                               @hexuria
 /crates/                        @hexuria
-/crates/pua-rules/tests/fixtures/ @hexuria
+/crates/instinct-rules/tests/fixtures/ @hexuria
 /.github/                       @hexuria
 /deny.toml                      @hexuria
 /scripts/                       @hexuria

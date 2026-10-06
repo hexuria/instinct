@@ -1,9 +1,9 @@
 # Review report (T17)
 
-Closing audit of the hexuria/pua build against docs/plan.md and the impeccable-rust bar.
+Closing audit of the hexuria/instinct build against docs/plan.md and the impeccable-rust bar.
 Status as of the T11–T17 stack tip. Proven claims are bounded; Deferred items are intentional.
 
-> **Phase 2 update (2026-10-05).** The packs and `pua-jev` moved to their consumers (ADR 0010).
+> **Phase 2 update (2026-10-05).** The packs and `instinct-jev` moved to their consumers (ADR 0010).
 > Rows below that name a pack are kept as the record of what was proven **before** the move; the
 > tests moved with the code. Current engine status and remaining debt:
 > [architecture-audit.md §11](architecture-audit.md#11-phase-2-follow-up-2026-10-05).
@@ -15,13 +15,13 @@ Status as of the T11–T17 stack tip. Proven claims are bounded; Deferred items 
 | Decision path is integer-only | No floats in the engine at all since Phase 2 (the Jev boundary moved to opengrok-server `opengrok-jev`) | `float_arithmetic` denied workspace-wide, no `#[allow]` left |
 | `unsafe` is forbidden | Every crate `#![forbid(unsafe_code)]` | CI repo rules + architecture |
 | Deterministic packs | No HashMap/HashSet/clocks/RNG/env in decision paths | clippy bans; generator-sequence / permutation proptests per pack |
-| Offset map indexes original text | `Span` values from `pua-text` normalize (the only user of the offset map; `pua-ocr` used its own scanner) | span equivariance proptests in `pua-text` |
+| Offset map indexes original text | `Span` values from `instinct-text` normalize (the only user of the offset map; `instinct-ocr` used its own scanner) | span equivariance proptests in `instinct-text` |
 | Interrupt never auto-applies | `AutoApply::Never` on interrupt | ADR 0008; autosteer eval FP=0 |
 | TIN suggestions never say "valid" | Type + string scan | `SuggestionKind` / reason tests; bir-fields mutants |
 | Gateway shape has no tier type | Public API is integer `ShapeFeatures` only | crate docs + compile-time surface test |
 | WL fingerprints are relabeling-invariant | Complete-graph / call-DAG constructions | graph + pack layout/call-DAG proptests; C₆ vs 2×C₃ collision documented |
 | Instruction-count gate wired | Callgrind Ir via gungraun 0.20, limit `ir=10%` | `benches/`, `scripts/bench-gate.sh`, `docs/benchmarks.md` |
-| Fuzz targets for parsers | `normalize`, `lexicon_lookup`, `rules_match`, `graph_from_bytes` (`jev_reply_parse` moved out with `pua-jev`) | `fuzz/`; nightly smoke `scripts/fuzz-smoke.sh` |
+| Fuzz targets for parsers | `normalize`, `lexicon_lookup`, `rules_match`, `graph_from_bytes` (`jev_reply_parse` moved out with `instinct-jev`) | `fuzz/`; nightly smoke `scripts/fuzz-smoke.sh` |
 
 Terminology: *invariant* = exact `==` after a declared free move; *equivariant* = output transforms with the input; *free move* = elementary generator in the §6 tables.
 
@@ -55,9 +55,9 @@ Terminology: *invariant* = exact `==` after a declared free move; *equivariant* 
 
 | Failure mode | Owner | Status |
 |---|---|---|
-| Wrong decide / threshold / tie-break | `pua-core` unit + props | Done |
+| Wrong decide / threshold / tie-break | `instinct-core` unit + props | Done |
 | Output changes under declared move | per-stage / per-pack proptests | Done through T14 |
-| Offset map wrong original bytes | `pua-text` + ocr-labels | Done |
+| Offset map wrong original bytes | `instinct-text` + ocr-labels | Done |
 | NFC chunking ≠ whole-string NFC | differential proptest | Done |
 | Panic on hostile input | fuzz + never-panics props | Targets listed; nightly smoke |
 | Nondeterminism | clippy + goldens | Done |

@@ -1,6 +1,6 @@
 # Benchmark regression gate (skill §4): instruction counts from Callgrind via gungraun, base and
 # head measured back to back in ONE job on the same runner. Decision rule: fail when any
-# benchmark's Ir grows by more than $PUA_BENCH_LIMIT versus the merge base (docs/benchmarks.md).
+# benchmark's Ir grows by more than $INSTINCT_BENCH_LIMIT versus the merge base (docs/benchmarks.md).
 name: Bench
 
 on:
@@ -15,7 +15,7 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  PUA_BENCH_LIMIT: "ir=10%"
+  INSTINCT_BENCH_LIMIT: "ir=10%"
 
 jobs:
   callgrind:

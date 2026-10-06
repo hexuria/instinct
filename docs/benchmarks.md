@@ -1,12 +1,12 @@
 # Benchmarks
 
-Instruction-count regression gate for PUA. Wall-clock §5.3 budgets are informational only.
+Instruction-count regression gate for Instinct. Wall-clock §5.3 budgets are informational only.
 
 ## Load model
 
 | Bench | Input | Spec §5.3 row |
 |---|---|---|
-| `classifier_decide` | one message through `RuleClassifier` on the `pua-rules` delivery fixture | classifier decide (was autosteer `ask`) |
+| `classifier_decide` | one message through `RuleClassifier` on the `instinct-rules` delivery fixture | classifier decide (was autosteer `ask`) |
 | `normalize_32kib` | ~32 KiB Latin prose + protected spans | text normalize, 32 KB input |
 | `cleanup_4096` | codebook n = 4096, D = 1024 | cleanup over a 4,096-entry codebook |
 | `resonator_64x64` | \|A\| = \|B\| = 64, `IterationCap::MAX` (16) | resonator worst case |
@@ -20,7 +20,7 @@ region via gungraun `setup` / `#[bench]` args.
 - **Metric:** Callgrind instruction count (`Ir`), via [gungraun](https://crates.io/crates/gungraun) 0.20.
 - **Environment:** one CI job measures base then HEAD back-to-back on the same runner
   (`scripts/bench-gate.sh`), sharing one `CARGO_TARGET_DIR`.
-- **Limit:** `PUA_BENCH_LIMIT` (default `ir=10%`). gungraun exits 3 on a breach.
+- **Limit:** `INSTINCT_BENCH_LIMIT` (default `ir=10%`). gungraun exits 3 on a breach.
 
 ## Decision rule
 
@@ -45,6 +45,6 @@ the gate). Re-measure after algorithmic changes; do not fail CI on these.
 
 ```bash
 # Requires valgrind + gungraun-runner (see .github/workflows/bench.yml).
-cargo bench -p pua-benches --locked
+cargo bench -p instinct-benches --locked
 scripts/bench-gate.sh HEAD~1
 ```

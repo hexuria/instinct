@@ -1,30 +1,30 @@
-# Dependency direction for hexuria/pua (spec §3.1).
+# Dependency direction for hexuria/instinct (spec §3.1).
 #
 # Format:
-#   <crate>: <allowed pua-* deps, space separated>
+#   <crate>: <allowed instinct-* deps, space separated>
 #       | <banned crates anywhere in the crate's dependency closure; `*` is a glob>
 #
 # Checked by scripts/check_architecture.py in CI:
 #   1. every workspace member has an entry (new crates must declare their direction);
 #   2. a crate's normal and build dependencies on workspace crates are a subset of "allowed";
 #   3. no banned crate appears anywhere in its resolved dependency closure (incl. dev-deps).
-# Engine crates only (ADR 0010): no edge from a pua-* crate to a consumer crate or concept.
+# Engine crates only (ADR 0010): no edge from a instinct-* crate to a consumer crate or concept.
 
-pua-core:
+instinct-core:
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
-pua-text: pua-core
+instinct-text: instinct-core
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
-pua-lexicon: pua-core pua-text
+instinct-lexicon: instinct-core instinct-text
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
-pua-rules: pua-core pua-text pua-lexicon
+instinct-rules: instinct-core instinct-text instinct-lexicon
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
-pua-hdc: pua-core
+instinct-hdc: instinct-core
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
-pua-graph: pua-core
+instinct-graph: instinct-core
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
-pua-explain: pua-core
+instinct-explain: instinct-core
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*
 
 # Bench harness (Callgrind Ir gate). May depend on every library crate; still bans network/async.
-pua-benches: pua-core pua-text pua-lexicon pua-rules pua-hdc pua-graph
+instinct-benches: instinct-core instinct-text instinct-lexicon instinct-rules instinct-hdc instinct-graph
     | tokio axum sqlx reqwest hyper typesafe-sdk opengrok-*

@@ -1,10 +1,13 @@
 # Changelog
 
-All notable changes to `hexuria/pua`. Tags are `vMAJOR.MINOR.PATCH` on `main` (spec §3.2). A change
+All notable changes to `hexuria/instinct` (named `hexuria/pua` before the rename). Tags are `vMAJOR.MINOR.PATCH` on `main` (spec §3.2). A change
 to rule, lexicon or codebook data that alters output bumps MINOR and changes `DataVersion`; a change
 to public types bumps MAJOR (MINOR while 0.x).
 
 ## [Unreleased]
+
+### Changed
+- Renamed PUA → Instinct: crates `pua-*` → `instinct-*`, repo hexuria/pua → hexuria/instinct. Hash/wire domain tags (`pua-data-version-v1`, `pua-hv1`, …) are frozen and unchanged, so DataVersions and golden journals are byte-identical.
 
 ### Added
 - CI foundation: PR gate, nightly tier, mutants-diff, bench gate, release skeleton, cargo-deny,

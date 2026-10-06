@@ -5,9 +5,9 @@
 use std::sync::OnceLock;
 
 use libfuzzer_sys::fuzz_target;
-use pua_core::Confidence;
-use pua_lexicon::{EntrySpec, Lexicon, LexiconSpec, Repair};
-use pua_text::{NormalizeConfig, normalize};
+use instinct_core::Confidence;
+use instinct_lexicon::{EntrySpec, Lexicon, LexiconSpec, Repair};
+use instinct_text::{NormalizeConfig, normalize};
 
 fn lexicon() -> &'static Lexicon {
     static LEX: OnceLock<Lexicon> = OnceLock::new();

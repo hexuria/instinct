@@ -208,6 +208,96 @@ dependencies = [
 ]
 
 [[package]]
+name = "instinct-benches"
+version = "0.0.0"
+dependencies = [
+ "gungraun",
+ "instinct-core",
+ "instinct-graph",
+ "instinct-hdc",
+ "instinct-lexicon",
+ "instinct-rules",
+ "instinct-text",
+ "toml",
+]
+
+[[package]]
+name = "instinct-core"
+version = "0.0.0"
+dependencies = [
+ "blake3",
+ "proptest",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "instinct-explain"
+version = "0.0.0"
+dependencies = [
+ "blake3",
+ "instinct-core",
+ "proptest",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "instinct-graph"
+version = "0.0.0"
+dependencies = [
+ "blake3",
+ "instinct-core",
+ "proptest",
+]
+
+[[package]]
+name = "instinct-hdc"
+version = "0.0.0"
+dependencies = [
+ "instinct-core",
+ "proptest",
+]
+
+[[package]]
+name = "instinct-lexicon"
+version = "0.0.0"
+dependencies = [
+ "instinct-core",
+ "instinct-text",
+ "proptest",
+ "serde",
+ "toml",
+ "unicode-normalization",
+]
+
+[[package]]
+name = "instinct-rules"
+version = "0.0.0"
+dependencies = [
+ "instinct-core",
+ "instinct-explain",
+ "instinct-lexicon",
+ "instinct-text",
+ "proptest",
+ "serde",
+ "serde_json",
+ "toml",
+ "unicode-normalization",
+]
+
+[[package]]
+name = "instinct-text"
+version = "0.0.0"
+dependencies = [
+ "instinct-core",
+ "proptest",
+ "unicode-normalization",
+ "unicode-security",
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -295,96 +385,6 @@ dependencies = [
  "rand_xorshift",
  "regex-syntax",
  "unarray",
-]
-
-[[package]]
-name = "pua-benches"
-version = "0.0.0"
-dependencies = [
- "gungraun",
- "pua-core",
- "pua-graph",
- "pua-hdc",
- "pua-lexicon",
- "pua-rules",
- "pua-text",
- "toml",
-]
-
-[[package]]
-name = "pua-core"
-version = "0.0.0"
-dependencies = [
- "blake3",
- "proptest",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "pua-explain"
-version = "0.0.0"
-dependencies = [
- "blake3",
- "proptest",
- "pua-core",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "pua-graph"
-version = "0.0.0"
-dependencies = [
- "blake3",
- "proptest",
- "pua-core",
-]
-
-[[package]]
-name = "pua-hdc"
-version = "0.0.0"
-dependencies = [
- "proptest",
- "pua-core",
-]
-
-[[package]]
-name = "pua-lexicon"
-version = "0.0.0"
-dependencies = [
- "proptest",
- "pua-core",
- "pua-text",
- "serde",
- "toml",
- "unicode-normalization",
-]
-
-[[package]]
-name = "pua-rules"
-version = "0.0.0"
-dependencies = [
- "proptest",
- "pua-core",
- "pua-explain",
- "pua-lexicon",
- "pua-text",
- "serde",
- "serde_json",
- "toml",
- "unicode-normalization",
-]
-
-[[package]]
-name = "pua-text"
-version = "0.0.0"
-dependencies = [
- "proptest",
- "pua-core",
- "unicode-normalization",
- "unicode-security",
- "unicode-segmentation",
 ]
 
 [[package]]

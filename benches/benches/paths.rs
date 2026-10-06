@@ -10,11 +10,11 @@
 use std::hint::black_box;
 
 use gungraun::{library_benchmark, library_benchmark_group, main};
-use pua_core::{Millis, Profile};
-use pua_graph::{Edge, LabeledGraph, Rounds, wl_refine};
-use pua_hdc::{Codebook, D1024, Encoder, IterationCap, resonate};
-use pua_rules::{ClassifierSpec, OnConfusable, RuleClassifier};
-use pua_text::{Fold, NormalizeConfig, PunctRuns, normalize};
+use instinct_core::{Millis, Profile};
+use instinct_graph::{Edge, LabeledGraph, Rounds, wl_refine};
+use instinct_hdc::{Codebook, D1024, Encoder, IterationCap, resonate};
+use instinct_rules::{ClassifierSpec, OnConfusable, RuleClassifier};
+use instinct_text::{Fold, NormalizeConfig, PunctRuns, normalize};
 
 fn prose_32kib() -> String {
     // ~32 KiB of Latin prose with a couple of protected spans.
@@ -23,11 +23,12 @@ fn prose_32kib() -> String {
     unit.repeat(32_768 / unit.len() + 1)
 }
 
-/// The engine's realistic regression fixture (`crates/pua-rules/tests/fixtures/delivery`).
+/// The engine's realistic regression fixture (`crates/instinct-rules/tests/fixtures/delivery`).
 fn delivery_classifier() -> RuleClassifier {
     const LEXICON: &str =
-        include_str!("../../crates/pua-rules/tests/fixtures/delivery/lexicon.toml");
-    const RULES: &str = include_str!("../../crates/pua-rules/tests/fixtures/delivery/rules.toml");
+        include_str!("../../crates/instinct-rules/tests/fixtures/delivery/lexicon.toml");
+    const RULES: &str =
+        include_str!("../../crates/instinct-rules/tests/fixtures/delivery/rules.toml");
     RuleClassifier::new(&ClassifierSpec {
         domain: "pua-steer/1".into(),
         question: "delivery".into(),
@@ -55,7 +56,7 @@ fn normalize_32kib(text: String) {
     let _ = black_box(normalize(black_box(&text), NormalizeConfig::default()));
 }
 
-fn codebook_4096() -> (Codebook<D1024>, pua_hdc::Hv<D1024>) {
+fn codebook_4096() -> (Codebook<D1024>, instinct_hdc::Hv<D1024>) {
     let enc = Encoder::new("bench", 1);
     let entries: Vec<(String, _)> = (0..4096)
         .map(|i| {
@@ -71,13 +72,13 @@ fn codebook_4096() -> (Codebook<D1024>, pua_hdc::Hv<D1024>) {
 
 #[library_benchmark]
 #[bench::max_codebook(setup = codebook_4096)]
-fn cleanup_4096(input: (Codebook<D1024>, pua_hdc::Hv<D1024>)) {
+fn cleanup_4096(input: (Codebook<D1024>, instinct_hdc::Hv<D1024>)) {
     let (book, q) = input;
     let _ = black_box(book.cleanup(black_box(&q), Millis::ZERO));
 }
 
 fn resonator_worst() -> (
-    pua_hdc::Hv<D1024>,
+    instinct_hdc::Hv<D1024>,
     Codebook<D1024>,
     Codebook<D1024>,
     IterationCap,
@@ -108,7 +109,7 @@ fn resonator_worst() -> (
 #[bench::cap16(setup = resonator_worst)]
 fn resonator_64x64(
     input: (
-        pua_hdc::Hv<D1024>,
+        instinct_hdc::Hv<D1024>,
         Codebook<D1024>,
         Codebook<D1024>,
         IterationCap,

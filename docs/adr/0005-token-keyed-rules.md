@@ -2,12 +2,12 @@
 
 - Status: accepted
 - Date: 2026-10-05
-- Task: T6 (`pua-rules`)
+- Task: T6 (`instinct-rules`)
 
 ## Context
 
 Spec §4.4 says rule data is "compiled at build time into Aho-Corasick automata + small
-matchers". The automaton finds literal byte strings anywhere in a text. Every PUA cue has to
+matchers". The automaton finds literal byte strings anywhere in a text. Every Instinct cue has to
 match on **token boundaries** (the "tin matched setting" lesson, `intent.rs:112-115`), skip
 protected spans, stay inside one sentence, and support `{word}`/`{gerund}` slots. A byte
 automaton would need all of those checks re-applied after every hit, and the boundary check is

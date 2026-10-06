@@ -1,6 +1,6 @@
 [package]
-name = "pua-benches"
-description = "PUA Callgrind instruction-count benches (gungraun) for the §5.3 paths."
+name = "instinct-benches"
+description = "Instinct Callgrind instruction-count benches (gungraun) for the §5.3 paths."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,12 +9,12 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
-pua-core.workspace = true
-pua-text.workspace = true
-pua-hdc.workspace = true
-pua-graph.workspace = true
-pua-lexicon = { workspace = true, features = ["serde"] }
-pua-rules = { workspace = true, features = ["serde"] }
+instinct-core.workspace = true
+instinct-text.workspace = true
+instinct-hdc.workspace = true
+instinct-graph.workspace = true
+instinct-lexicon = { workspace = true, features = ["serde"] }
+instinct-rules = { workspace = true, features = ["serde"] }
 toml.workspace = true
 
 [dev-dependencies]
