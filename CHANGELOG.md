@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `hexuria/pua`. Tags are `vMAJOR.MINOR.PATCH` on `main` (spec §3.2). A change
+All notable changes to `hexuria/instinct` (named `hexuria/pua` before the rename). Tags are `vMAJOR.MINOR.PATCH` on `main` (spec §3.2). A change
 to rule, lexicon or codebook data that alters output bumps MINOR and changes `DataVersion`; a change
 to public types bumps MAJOR (MINOR while 0.x).
 
