@@ -35,11 +35,21 @@ Same input + same data (`DataVersion`) + same profile gives a **byte-identical**
 
 Confidences are deterministic scores, **not calibrated probabilities**.
 
+## Instinct arbitration
+
+Consumers can optionally combine evidence with their own named drive levels and drive-to-option
+affinities using max-dominance urge and incumbent persistence; the result still passes through
+Instinct's single threshold-and-margin gate. Drive meanings remain consumer-owned, and consumers
+fold `INSTINCT_TAG` into their `DataVersion` when using the formula. The crate-level doctest shows the
+modal example: at threat 1000, the deep profile chooses "accept" while the standard profile abstains
+on the near-tie. See [spec §4.10](docs/spec.md#410-instinct-arbitration) and
+[ADR 0011](docs/adr/0011-instinct-arbitration.md).
+
 ## Crates
 
 | Crate | What it does |
 |---|---|
-| `instinct-core` | `Question` / `Answer` (Noul, Choice, Score, Abstain), `Confidence`, `Span`, `Scores` + `decide` (the one gate), `abstain`, `CandidateSet`, `Profile` presets, `Trail`, `Decision`, `DataVersion` |
+| `instinct-core` | `Question` / `Answer` (Noul, Choice, Score, Abstain), `Confidence`, `Span`, `Scores` + `decide` (the one gate), optional drive `arbitrate`, `abstain`, `CandidateSet`, `Profile` presets, `Trail`, `Decision`, `DataVersion` |
 | `instinct-text` | NFC + fold (`Ñ`-safe), offset map to original bytes, protected spans (code, URLs, paths, quotes, numbers), tokens, sentences, confusable flags |
 | `instinct-lexicon` | closed vocabulary: token-boundary exact and longest match, opt-in substring, SymSpell typo repair with QWERTY tie-breaks; `overlap` for open-text candidates |
 | `instinct-rules` | token-keyed cue rules with negation window, question damper and object scope; **`RuleClassifier`**, the full text → `Decision` pipeline from a `ClassifierSpec` |

@@ -52,6 +52,7 @@ nextest, doc, deny, architecture) → push → CI green → fix → next. One st
 | T15 | Benches | `benches/` (`instinct-benches`) | gungraun Callgrind benches for each §5.3 path incl. pathological inputs (32 KB, max codebook, resonator worst case), wiring the bench gate; docs/benchmarks.md with load model, statistic and decision rule; wall-clock §5.3 budgets measured once and reported as informational. |
 | T16 | Fuzz | `fuzz/` | cargo-fuzz targets: `normalize`, `lexicon_lookup`, `rules_match`, `graph_from_bytes`, `jev_reply_parse`; seeds committed; nightly smoke. |
 | T17 | Review report | docs | docs/review-report.md: Proven (with terminology and bounds), Documented, Deferred, Compat/deps, Verification owners. docs/verification.md: mutants and litmus results. |
+| T18 | Instinct arbitration | `instinct-core` | Consumer-owned drives and affinities, max-dominance urge, incumbent persistence, one `decide` gate; ADR 0011; exact unit tests and proptests. No fuzz target: no untrusted bytes cross this API. |
 
 ## Verification architecture
 
@@ -63,6 +64,7 @@ arbitrary user text). The "replay" in the spec is deterministic re-execution, no
 | Failure mode | Class (skill table) | Owner | Notes |
 |---|---|---|---|
 | Wrong decision / threshold / tie-break | Deterministic logic | unit + property tests (`instinct-core`) | margin, abstain, option-0 tie, equivariance |
+| Wrong arbitration / persistence | Deterministic logic | unit + property tests (`instinct-core`) | exact integer formula, dominant drive, incumbent-only bonus; no untrusted bytes cross this API, so no fuzz target |
 | Output changes under a declared move | Deterministic logic | generator-sequence proptests per stage and per pack | exact `==`, never tolerance |
 | Offset map points at the wrong original bytes | Deterministic logic | property tests (span equivariance, in-bounds, monotone) + Unicode fixtures | the COR bug class |
 | NFC chunking differs from real NFC | Reimplementation | differential proptest vs `unicode-normalization` whole-string NFC | trusted oracle |
@@ -108,6 +110,7 @@ it must execute the golden replay journals.
 | 0007 (not written) | Owner-decision defaults (q14, q15, q8, q5): case and punctuation runs are symmetries for autosteer; label diacritics are NOT folded in ocr-labels; WL `h = 3`; sample catalogs only; no TIN checksum |
 | 0008 | Interrupt never auto-applies, expressed as a type (`AutoApply`) |
 | 0009 | Jev adapter: one float boundary (`convert.rs`), score levels matched by label not rung, off-menu guard on labels and probability keys, noul drift check, labelled fallback (`FallbackWhy`) |
+| 0011 | Domain-agnostic max-dominance urge, consumer-owned drives, thresholded incumbent persistence, and the existing single decide gate |
 
 ## Plan review
 

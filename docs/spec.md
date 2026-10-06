@@ -151,12 +151,16 @@ text ─► instinct-text normalize (NFC, fold, protected spans, offset map, con
      ─► instinct-lexicon lookup (exact / longest / substring / repaired hits; confusable flags)
      ─► instinct-rules score (cues, negation, damper, scope; Max or Sum per class)
      ─► [consumer-supplied evidence: overlap, hdc cleanup, graph fingerprints, via Scores]
+     ─► [optional instinct-core arbitrate (consumer drives × option affinities → urges)]
      ─► instinct-core decide (profile thresholds, top-2 margin, abstain with ranked options)
      ─► Decision { answer, profile, data_version, trail }  ─► instinct-explain replay / diff
 ```
 
-`RuleClassifier` runs the first, second, third and fifth stages from one `ClassifierSpec`.
-`CandidateSet` lets any consumer run the decide stage over its own evidence.
+`RuleClassifier` runs its normalize, lexicon, rule and `decide` stages from one `ClassifierSpec`;
+optional drive arbitration is a separate consumer path. `CandidateSet` lets any consumer run the
+decide stage over its own evidence.
+`arbitrate` turns consumer-supplied drive levels and affinities into urges before invoking the same
+`decide` gate; it adds no second gate.
 
 ### 4.1 Core types (`instinct-core`)
 
@@ -169,11 +173,27 @@ text ─► instinct-text normalize (NFC, fold, protected spans, offset map, con
   `ranked` always holds every option, confidence-descending then index-ascending.
 - `Scores` holds one `Confidence` per option. `set`, `raise_to` (Max) and `add` (Sum) are the
   composition point for evidence.
+- `DriveIndex`, `Drive`, `Drives`, `Affinity`, and `Arbitration` provide optional consumer-owned
+  drive-modulated arbitration (§4.10). `INSTINCT_TAG` is folded into a consumer's `DataVersion`
+  when it uses the formula; `MAX_DRIVES` is 16.
+- `arbitrate` validates the question and drive/option indices before computing urges and calling
+  `decide` once:
+
+  ```rust
+  pub fn arbitrate<'q>(
+      evidence: &Scores<'q>,
+      drives: &Drives,
+      affinity: &Affinity<'q>,
+      incumbent: Option<OptionIndex>,
+      profile: Profile,
+  ) -> Result<Arbitration<'q>, InstinctError>;
+  ```
 - `decide(&Scores, Profile) -> Answer` is **the** gate (§4.6). `abstain(&Scores, why)` is for stages
   that refuse early (too-long input, confusable, config mismatch) and still return every option ranked.
 - `CandidateSet` (§4.9).
 - `Trail` / `TrailRecord` with `StageKind`, optional rule id, `ScorerKind`, span (original
-  coordinates), millis and text. It lives in core (ADR 0003).
+  coordinates), millis and text, including `StageKind::Instinct` records (§4.10). It lives in core
+  (ADR 0003).
 - `Decision = (Answer, Profile, DataVersion, Trail)`. This is the journaled unit.
 - `DataVersion`: a domain-separated blake3 builder over named fields (§5 rule 5).
 
@@ -308,6 +328,47 @@ same `decide` gate. Methods:
 - `chosen(&Answer)` is **`None` on abstain**, so a consumer cannot act on an abstain by accident.
 
 Exact ties rank the lower id first and abstain. Input order never matters (§5 rule 4).
+
+### 4.10 Instinct arbitration
+
+`arbitrate(evidence, drives, affinity, incumbent, profile)` is an optional, domain-agnostic
+preparation of `Scores`. Consumers define the meanings of the drive names, levels, affinities, and
+options; `instinct-core` only knows their names and integer values. A `Drives` set is ordered,
+non-empty, uniquely named, and limited to `MAX_DRIVES = 16`. `DriveIndex` is the drive's 0-based
+position.
+
+All math uses `i32` intermediates and floor division:
+
+```text
+pull[d][i] = D[d] * W[d][i] / 1000
+best[i] = max_d pull[d][i]
+urge[i] = best[i] * S[i] / 1000
+```
+
+`D` is the drive level, `W` the drive-to-option affinity, and `S` the consumer's existing evidence
+score. Each is in `0..=1000`. The six semantics are:
+
+1. The evidence and affinity questions must compare equal by value; affinity's drive count must
+   equal `Drives::len()`; an incumbent, if supplied, must be an in-range option.
+2. For each option, the lowest drive index wins a tie for `best[i]`. `dominant[i]` is `None` only
+   when every pull for that option is zero.
+3. Zero evidence always gives zero urge, even when a drive has a non-zero pull. Urges are clamped
+   with `Confidence::saturating`.
+4. If `incumbent = Some(k)` and raw `urge[k]` is at least
+   `profile.thresholds().min_confidence`, add `min_margin` to that option with saturation at 1000.
+   Otherwise the incumbent receives no bonus. A raw tie lets the incumbent keep control; a
+   challenger must overcome the bonus to take over, and a near-tie still freezes.
+5. The resulting scores go through `decide` exactly once. There is no new gate or abstain reason:
+   freeze is the existing `Abstain` with every option ranked.
+6. The same inputs produce a byte-identical `Arbitration`; the formula uses no random selection.
+   Consumers that call `arbitrate` fold the exact public `INSTINCT_TAG` into their `DataVersion`;
+   other consumers' versions do not change.
+
+`Arbitration` exposes the answer, raw urges, per-option dominant drive, winner drive, and whether
+persistence applied. Its trail has one `StageKind::Instinct` record per non-zero urge, in option
+order, with text `"<option label> urge <u> dominant <drive name>"` and `millis = urge`, plus a final
+`"persist <label> +<bonus>"` record when persistence applies. See
+[ADR 0011](adr/0011-instinct-arbitration.md).
 
 ## 5. Determinism and replay contract
 
