@@ -1,25 +1,25 @@
 # ADR 0009: Jev adapter trusts labels, converts floats once, and labels every fallback
 
 - Status: accepted; **moved with the code** to hexuria/opengrok-server `crates/opengrok-jev`
-  (ADR 0010). PUA no longer has a float boundary at all.
+  (ADR 0010). Instinct no longer has a float boundary at all.
 - Date: 2026-10-05
-- Task: T9 (`pua-jev`)
+- Task: T9 (`instinct-jev`)
 
 ## Context
 
-Spec §8 sends the same `Question` to Jev when PUA abstains and requires three things: an
+Spec §8 sends the same `Question` to Jev when Instinct abstains and requires three things: an
 answer outside the offered options is an error, Jev's four error kinds stay distinct, and a
 fallback is never recorded as an answer. Spec §5 rule 2 allows a float into the decision path
 only at this adapter. The wire shapes come from `opengrok-server
 crates/opengrok-server/src/jev/routes.rs` (`AskedQuestion`, `AnsweredQuestion`, `noul_reading`,
-`rung_of`). PUA has no HTTP client and must not depend on `typesafe-sdk` (spec §3.1).
+`rung_of`). Instinct has no HTTP client and must not depend on `typesafe-sdk` (spec §3.1).
 
 ## Decision
 
 - **One float boundary.** `confidence_from_unit` is the only float → `Confidence` conversion
   (round half away from zero; NaN/∞ → `NonFinite`, outside `[0, 1]` → `OutOfRange`).
   `clippy::float_arithmetic` stays denied workspace-wide and is allowed only in
-  `pua-jev/src/convert.rs`.
+  `instinct-jev/src/convert.rs`.
 - **Labels, not rung numbers.** A score answer maps to a level by its `level` text, which must
   equal an offered level. The route does not pin whether rungs count from 0 or 1, so the
   number is only checked for finiteness. A missing `level` is refused (off-menu).
@@ -40,7 +40,7 @@ crates/opengrok-server/src/jev/routes.rs` (`AskedQuestion`, `AnsweredQuestion`, 
 ## Consequences
 
 - Consumers convert their own transport results into `Result<&str, JevError>`. Each keeps its
-  own SDK version, so there is no SDK version skew inside PUA.
+  own SDK version, so there is no SDK version skew inside Instinct.
 - A Jev deployment that returns scores with no legend cannot be used with score questions until
   it sends `level`. That is the safe failure.
 - Gap: the shapes mirror one snapshot of `routes.rs`. Re-check that file before a consumer wires

@@ -25,7 +25,7 @@ Affected invariants:
 Tests or proofs updated:
 ```
 
-Concurrency, persistence, TLA+, proof-kernel and unsafe boxes are omitted on purpose: PUA has no
+Concurrency, persistence, TLA+, proof-kernel and unsafe boxes are omitted on purpose: Instinct has no
 concurrent kernel, no persistence and `#![forbid(unsafe_code)]` everywhere (docs/plan.md). If this
 PR introduces any of those, add the box back and update docs/plan.md "Verification architecture".
 

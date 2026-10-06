@@ -36,18 +36,18 @@ multiple-versions = "warn"
 wildcards = "deny"
 allow-wildcard-paths = true
 highlight = "all"
-# Spec §3.1: no async runtime, web, DB, HTTP client, Jev SDK or opengrok crate in any PUA crate.
+# Spec §3.1: no async runtime, web, DB, HTTP client, Jev SDK or opengrok crate in any Instinct crate.
 # scripts/architecture.txt enforces the same list per crate (with the opengrok-* glob).
 deny = [
-    { crate = "tokio", reason = "PUA is sync and pure (spec §1 non-goals)" },
-    { crate = "axum", reason = "no web stack in PUA (spec §3.1)" },
-    { crate = "sqlx", reason = "no database in PUA (spec §3.1)" },
-    { crate = "reqwest", reason = "no network in PUA (spec §3.1)" },
-    { crate = "hyper", reason = "no network in PUA (spec §3.1)" },
-    { crate = "typesafe-sdk", reason = "a network client; PUA has no network in the decision path (spec §3.1)" },
-    { crate = "opengrok-core", reason = "PUA must not depend on opengrok (spec §3.1)" },
-    { crate = "opengrok-server", reason = "PUA must not depend on opengrok (spec §3.1)" },
-    { crate = "opengrok-tools", reason = "PUA must not depend on opengrok (spec §3.1)" },
+    { crate = "tokio", reason = "Instinct is sync and pure (spec §1 non-goals)" },
+    { crate = "axum", reason = "no web stack in Instinct(spec §3.1)" },
+    { crate = "sqlx", reason = "no database in Instinct(spec §3.1)" },
+    { crate = "reqwest", reason = "no network in Instinct(spec §3.1)" },
+    { crate = "hyper", reason = "no network in Instinct(spec §3.1)" },
+    { crate = "typesafe-sdk", reason = "a network client; Instinct has no network in the decision path (spec §3.1)" },
+    { crate = "opengrok-core", reason = "Instinct must not depend on opengrok (spec §3.1)" },
+    { crate = "opengrok-server", reason = "Instinct must not depend on opengrok (spec §3.1)" },
+    { crate = "opengrok-tools", reason = "Instinct must not depend on opengrok (spec §3.1)" },
 ]
 
 [sources]

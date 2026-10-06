@@ -1,4 +1,4 @@
-# Contributing to hexuria/pua
+# Contributing to hexuria/instinct
 
 Read AGENTS.md first; its hard rules and anti-drift rule apply to every change.
 

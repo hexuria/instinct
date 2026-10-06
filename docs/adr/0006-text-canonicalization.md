@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-10-05
-- Task: T4 (`pua-text`)
+- Task: T4 (`instinct-text`)
 
 ## Context
 

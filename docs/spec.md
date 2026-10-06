@@ -1,9 +1,9 @@
-# SPEC: PUA, the Predictable Universal Advisor (`pua-*` crates)
+# SPEC: Instinct (`instinct-*` crates)
 
 Status: **implemented**. Seven engine crates are on `main`, with no tag yet. This spec describes the
 domain-agnostic engine after the Phase 2 split ([ADR 0010](adr/0010-engine-consumer-boundary.md),
 [architecture audit](architecture-audit.md)).  
-Repo: [`hexuria/pua`](https://github.com/hexuria/pua). Consumers pin by git tag or rev (§3.2).  
+Repo: [`hexuria/instinct`](https://github.com/hexuria/instinct). Consumers pin by git tag or rev (§3.2).
 Toolchain: Rust **1.99.0** (`rust-toolchain.toml`, owner rule), edition 2024,
 `#![forbid(unsafe_code)]` in every crate, workspace lints (`unwrap_used`, `expect_used`,
 `float_arithmetic` denied).  
@@ -26,71 +26,71 @@ structure. Its properties:
 - **abstain-first:** below the profile's confidence or margin it says "not sure", with every option
   ranked
 - **local:** CPU-only, microseconds to milliseconds, no network, no floats
-- **domain-agnostic:** PUA owns *how* a decision is made; the consumer owns *what* is decided (§2)
+- **domain-agnostic:** Instinct owns *how* a decision is made; the consumer owns *what* is decided (§2)
 
 **Non-goals.**
 
-- No LLM, GPU, gradient training, sampling, network or async in any PUA crate.
+- No LLM, GPU, gradient training, sampling, network or async in any Instinct crate.
 - No domain data or meaning in this repo. That includes lexicons, rules, labels and codebooks for a
   product, option meanings, auto-apply policy and wire formats. The only data here is labelled
   synthetic **fixtures** for engine regression tests.
 - Never overrides exact signals a consumer already has (reply-to, explicit target, a stop on a
-  specific run id, an explicit tier). Consumers check those before asking PUA.
+  specific run id, an explicit tier). Consumers check those before asking Instinct.
 - No learned canonicalization, symmetry discovery, spectral graph features or resistance distance.
 - **Not a clone of BCSC's FMM.** Public descriptions of FMM (high-dimensional representation,
   resonance, structural matching) inspired the pipeline shape. FMM is a conceptual inspiration, not a
-  blueprint: PUA does not reproduce FMM's algorithms, makes no claim of equivalence and is not a
-  generative model. PUA's own combination is:
-  - symbolic rules (`pua-rules`)
-  - lexical evidence (`pua-lexicon`)
-  - graph structure (`pua-graph`)
-  - hyperdimensional vectors and a resonator (`pua-hdc`)
-  - integer scoring and explicit abstention (`pua-core`)
+  blueprint: Instinct does not reproduce FMM's algorithms, makes no claim of equivalence and is not a
+  generative model. Instinct's own combination is:
+  - symbolic rules (`instinct-rules`)
+  - lexical evidence (`instinct-lexicon`)
+  - graph structure (`instinct-graph`)
+  - hyperdimensional vectors and a resonator (`instinct-hdc`)
+  - integer scoring and explicit abstention (`instinct-core`)
 - Not hyper-use's `HgraMatcher`. hyper-use is credited as prior art for the HDC encoder and is not a
   dependency. No crate is named `hgra` or after FMM vocabulary.
 
-**Position.** PUA can serve as a local tier below a heavier decision model (TypeSafe's Jev), asking
-the same three question shapes. PUA is not "System One"; that is Jev's name.
+**Position.** Instinct can serve as a local tier below a heavier decision model (TypeSafe's Jev), asking
+the same three question shapes. Instinct is not "System One"; that is Jev's name.
 
 ## 2. Boundary: how vs what
 
-| PUA owns (how) | Consumers own (what) |
+| Instinct owns (how) | Consumers own (what) |
 |---|---|
-| canonicalization, offset map, protected spans, confusable detection (`pua-text`) | which `NormalizeConfig` (fold, punctuation runs) fits their text |
-| closed-vocabulary lookup, typo repair, word overlap (`pua-lexicon`) | the vocabulary (`LexiconSpec`) and its tags |
-| cue rules: negation, question damper, object scope, Max/Sum scorers (`pua-rules`) | the rules (`RuleSetSpec`): classes, patterns, weights |
+| canonicalization, offset map, protected spans, confusable detection (`instinct-text`) | which `NormalizeConfig` (fold, punctuation runs) fits their text |
+| closed-vocabulary lookup, typo repair, word overlap (`instinct-lexicon`) | the vocabulary (`LexiconSpec`) and its tags |
+| cue rules: negation, question damper, object scope, Max/Sum scorers (`instinct-rules`) | the rules (`RuleSetSpec`): classes, patterns, weights |
 | `RuleClassifier`: normalize → lexicon → confusable policy → rules → decide | the question name, the class order (class 0 = safe default), the `DataVersion` domain tag |
-| `CandidateSet` + the one decide gate (`pua-core`) | the candidate ids and their evidence |
-| hypervectors, codebook cleanup, resonator (`pua-hdc`) | codebooks and what a factor means |
-| WL fingerprints (`pua-graph`) | which graph (form layout, call DAG) and its labels |
-| `Trail`, `Decision`, `DataVersion`, replay and diff (`pua-core`, `pua-explain`) | journals, golden files, labelled evals, regression thresholds |
+| `CandidateSet` + the one decide gate (`instinct-core`) | the candidate ids and their evidence |
+| hypervectors, codebook cleanup, resonator (`instinct-hdc`) | codebooks and what a factor means |
+| WL fingerprints (`instinct-graph`) | which graph (form layout, call DAG) and its labels |
+| `Trail`, `Decision`, `DataVersion`, replay and diff (`instinct-core`, `instinct-explain`) | journals, golden files, labelled evals, regression thresholds |
 | three `Profile` presets | which preset a call site uses |
 | — | product policy (e.g. "an interrupt is never auto-applied"), UI, wire shapes, escalation to Jev |
 
-A consumer module is typically the following. Everything else is PUA:
+A consumer module is typically the following. Everything else is Instinct:
 
 - a `ClassifierSpec` built from its own TOML
 - a match on the chosen option label
 - its policy type
 - a journal of `Decision`s
 
-## 3. Repo layout (`hexuria/pua`)
+## 3. Repo layout (`hexuria/instinct`)
 
 ```text
 Cargo.toml            workspace: members, [workspace.package], [workspace.lints]
 rust-toolchain.toml   channel = "1.99.0"
 crates/
-  pua-core/      Question/Answer shapes, Millis, Confidence, Span, Scores + decide (one gate),
+  instinct-core/      Question/Answer shapes, Millis, Confidence, Span, Scores + decide (one gate),
                  abstain, CandidateSet, Profile presets, Trail, Decision, DataVersion
-  pua-text/      NFC, folds (ASCII | Unicode, Ñ-preserving), offset map, protected spans,
+  instinct-text/      NFC, folds (ASCII | Unicode, Ñ-preserving), offset map, protected spans,
                  token and sentence spans, confusable flags
-  pua-lexicon/   closed vocab: token-boundary exact and longest match (≤ 3 tokens), opt-in
+  instinct-lexicon/   closed vocab: token-boundary exact and longest match (≤ 3 tokens), opt-in
                  substring (≥ 5 chars), SymSpell repair + QWERTY tie-break; overlap()
-  pua-rules/     token-keyed cue rules (ADR 0005); RuleClassifier
-  pua-hdc/       packed bipolar vectors, seeded encoder, bind/bundle/permute, codebook, resonator
-  pua-graph/     LabeledGraph, 1-WL (+ optional SPD-WL) fingerprints, label_of
-  pua-explain/   replay records (JSON lines), replay check, decision diff, trail rendering
-crates/pua-rules/tests/fixtures/delivery/   synthetic labelled fixture (engine regression only)
+  instinct-rules/     token-keyed cue rules (ADR 0005); RuleClassifier
+  instinct-hdc/       packed bipolar vectors, seeded encoder, bind/bundle/permute, codebook, resonator
+  instinct-graph/     LabeledGraph, 1-WL (+ optional SPD-WL) fingerprints, label_of
+  instinct-explain/   replay records (JSON lines), replay check, decision diff, trail rendering
+crates/instinct-rules/tests/fixtures/delivery/   synthetic labelled fixture (engine regression only)
 benches/         Callgrind Ir gate (docs/benchmarks.md)
 fuzz/            cargo-fuzz targets
 ```
@@ -100,18 +100,18 @@ feature) and validated in the constructor. There is no `build.rs` codegen.
 
 ### 3.1 Dependency rules
 
-No `pua-*` crate depends on a consumer crate or names a consumer concept. Ids cross the boundary as
+No `instinct-*` crate depends on a consumer crate or names a consumer concept. Ids cross the boundary as
 `&str` / `u64`. `scripts/architecture.txt` encodes the allowed edges and is checked in CI:
 
 | Crate | May depend on |
 |---|---|
-| `pua-core` | — |
-| `pua-text` | `pua-core` |
-| `pua-lexicon` | `pua-core`, `pua-text` |
-| `pua-rules` | `pua-core`, `pua-text`, `pua-lexicon` |
-| `pua-hdc` | `pua-core` |
-| `pua-graph` | `pua-core` |
-| `pua-explain` | `pua-core` |
+| `instinct-core` | — |
+| `instinct-text` | `instinct-core` |
+| `instinct-lexicon` | `instinct-core`, `instinct-text` |
+| `instinct-rules` | `instinct-core`, `instinct-text`, `instinct-lexicon` |
+| `instinct-hdc` | `instinct-core` |
+| `instinct-graph` | `instinct-core` |
+| `instinct-explain` | `instinct-core` |
 
 - Banned anywhere in any crate's closure: `tokio`, `axum`, `sqlx`, `reqwest`, `hyper`,
   `typesafe-sdk`, `opengrok-*`.
@@ -127,7 +127,7 @@ Consumers take a **git dependency pinned by tag or `rev`**, never a branch. No t
 handoff PRs pin `rev = "e1635f12908deda99308f03222c4265043e0e749"`.
 
 ```toml
-pua-rules = { git = "https://github.com/hexuria/pua", rev = "<full sha>", features = ["serde"] }
+instinct-rules = { git = "https://github.com/hexuria/instinct", rev = "<full sha>", features = ["serde"] }
 ```
 
 - **Tags.** `vMAJOR.MINOR.PATCH` on `main`, with `CHANGELOG.md`. Any change that alters an output
@@ -135,30 +135,30 @@ pua-rules = { git = "https://github.com/hexuria/pua", rev = "<full sha>", featur
   0.x).
 - **Consumer goldens.** When a consumer bumps its pin, it regenerates its own golden journal and
   reviews the diff in the same PR.
-- **Local development.** `[patch."https://github.com/hexuria/pua"]` with `path = "../pua/crates/..."`.
+- **Local development.** `[patch."https://github.com/hexuria/instinct"]` with `path = "../instinct/crates/..."`.
   Never commit the patch.
-- **Toolchain.** `rust-version = "1.99"`. A consumer on an older toolchain cannot build PUA. For
+- **Toolchain.** `rust-version = "1.99"`. A consumer on an older toolchain cannot build Instinct. For
   example, opengrok-server pins 1.95, so its `opengrok-jev` crate is its own workspace until it bumps.
 - **Two copies.** Every crate in one consumer build must pin the same rev. Otherwise Cargo builds two
-  `pua-core`s and the types don't unify.
+  `instinct-core`s and the types don't unify.
 - **Consumer gates.** A consumer's `deny.toml` must allow the git source
-  `https://github.com/hexuria/pua`.
+  `https://github.com/hexuria/instinct`.
 
 ## 4. Core pipeline
 
 ```text
-text ─► pua-text normalize (NFC, fold, protected spans, offset map, confusables)
-     ─► pua-lexicon lookup (exact / longest / substring / repaired hits; confusable flags)
-     ─► pua-rules score (cues, negation, damper, scope; Max or Sum per class)
+text ─► instinct-text normalize (NFC, fold, protected spans, offset map, confusables)
+     ─► instinct-lexicon lookup (exact / longest / substring / repaired hits; confusable flags)
+     ─► instinct-rules score (cues, negation, damper, scope; Max or Sum per class)
      ─► [consumer-supplied evidence: overlap, hdc cleanup, graph fingerprints, via Scores]
-     ─► pua-core decide (profile thresholds, top-2 margin, abstain with ranked options)
-     ─► Decision { answer, profile, data_version, trail }  ─► pua-explain replay / diff
+     ─► instinct-core decide (profile thresholds, top-2 margin, abstain with ranked options)
+     ─► Decision { answer, profile, data_version, trail }  ─► instinct-explain replay / diff
 ```
 
 `RuleClassifier` runs the first, second, third and fifth stages from one `ClassifierSpec`.
 `CandidateSet` lets any consumer run the decide stage over its own evidence.
 
-### 4.1 Core types (`pua-core`)
+### 4.1 Core types (`instinct-core`)
 
 - `Millis(i16)`: similarity, −1000..=1000. `Confidence(i16)`: 0..=1000 (ADR 0002). Integers, not
   probabilities.
@@ -181,15 +181,14 @@ The spec once listed `Stage` / `CandidateGen` / `Scorer` / `Decider` traits and 
 exists. ADR 0003 deferred traits until there is a second implementation, and ADR 0010 dropped `Pack`.
 Every call is sync and pure, and allocation is bounded by input length and data size.
 
-### 4.2 Text with an offset map (`pua-text`)
+### 4.2 Text with an offset map (`instinct-text`)
 
 - **NFC first,** then a fold per `NormalizeConfig`:
   - `Fold::AsciiLower`
   - `Fold::UnicodeLower` (default): `Ñ` stays a letter, so `fold("PEÑA") == "peña"`, never `"pe a"`.
   
   `PunctRuns::{Keep, Collapse}` controls repeated punctuation.
-- **Offset map.** Every canonical byte maps back to an original byte range, and every span PUA
-  returns is in original coordinates (ADR 0006).
+- **Offset map.** Every canonical byte maps back to an original byte range, and every span Instinct  returns is in original coordinates (ADR 0006).
 - **Protected spans.** Fenced and inline code, URLs, paths, quoted text, version numbers and decimals
   are never matched or repaired inside. The detector is equivariant: folding case or spacing outside
   a span neither creates nor destroys one.
@@ -199,7 +198,7 @@ Every call is sync and pure, and allocation is bounded by input length and data 
   match a term or a rule literal.
 - Over-long input (> 16 MiB) is refused, never truncated.
 
-### 4.3 Lexicon (`pua-lexicon`)
+### 4.3 Lexicon (`instinct-lexicon`)
 
 - **Exact** is the longest term over up to 3 adjacent free tokens of one sentence. It is
   token-boundary by construction and never matches by prefix.
@@ -216,7 +215,7 @@ Every call is sync and pure, and allocation is bounded by input length and data 
 - **Symbolic hierarchies** (code families, namespaces) use exact or longest matching, not HDC
   similarity.
 
-### 4.4 Rules and `RuleClassifier` (`pua-rules`)
+### 4.4 Rules and `RuleClassifier` (`instinct-rules`)
 
 - Rules are data (`RuleSetSpec`) made of literal canonical tokens plus `{word}` / `{gerund}` slots.
   There is **no regex** in rule data. Matching is keyed by first token (ADR 0005), not Aho-Corasick.
@@ -235,17 +234,17 @@ Every call is sync and pure, and allocation is bounded by input length and data 
   It then stamps `DataVersion = builder(domain)` over lexicon, rules, profile table and normalize
   config. `on_confusable` adds a field only when it is `Ignore`.
 - **`decide(text, profile) -> Decision`** runs normalize → lookup → confusable policy
-  (`OnConfusable::Abstain` by default) → rules → `pua_core::decide`, and writes one trail record per
+  (`OnConfusable::Abstain` by default) → rules → `instinct_core::decide`, and writes one trail record per
   stage. Every refusal returns `Abstain` with all options ranked.
 - **Fixture:** `tests/fixtures/delivery/` (synthetic, labelled) replays a golden journal
   byte-identically, passes an eval false-positive gate and runs a determinism proptest.
 
-### 4.5 HDC (`pua-hdc`)
+### 4.5 HDC (`instinct-hdc`)
 
 - Bipolar vectors are packed one bit per component. `D ∈ {1024, 2048, 4096}` is a type, so mixing
   dimensions does not compile.
 - Encoder: an FNV-1a seed over `pua-hv1 ‖ namespace ‖ symbol ‖ version`, expanded by SplitMix64. The
-  algorithm is credited to hyper-use and ported with PUA's own tag.
+  algorithm is credited to hyper-use and ported with Instinct's own tag.
 - Algebra:
   - bind = XOR
   - permute = rotation (a deliberate order-encoding symmetry break)
@@ -257,7 +256,7 @@ Every call is sync and pure, and allocation is bounded by input length and data 
 - Capacity is **measured**, not assumed (`docs/hdc-capacity.md`).
 - **Not wired into a pipeline.** A consumer that brings a codebook combines a cleanup hit through
   `Scores::raise_to` and a `StageKind::Hdc` trail record. There is no `Evidence` trait until two
-  sources must be combined generically by PUA itself.
+  sources must be combined generically by Instinct itself.
 
 ### 4.6 Decide
 
@@ -273,10 +272,10 @@ API (ADR 0010):
 Options are ranked by confidence descending, then index ascending. If the top score is below the
 minimum confidence, or the top-2 margin is below the minimum margin, the answer is `Abstain` carrying
 the ranked list. Every minimum margin is positive, so **an exact top-2 tie always abstains**. Near a
-boundary PUA returns the tied set instead of flipping. `Profile::table_bytes()` goes into every
+boundary Instinct returns the tied set instead of flipping. `Profile::table_bytes()` goes into every
 `DataVersion`.
 
-### 4.7 Explain (`pua-explain`)
+### 4.7 Explain (`instinct-explain`)
 
 - `ReplayRecord` = `(schema, input hash, input, decision)`, serialized as one canonical JSON line
   (struct order, no maps, integers only).
@@ -286,7 +285,7 @@ boundary PUA returns the tied set instead of flipping. `Profile::table_bytes()` 
 - Max-scorer critical set: for `ScorerKind::Max`, edits outside the winning match and its negation
   window cannot change that class's score. Sum scorers make no such claim.
 
-### 4.8 Graph fingerprints (`pua-graph`)
+### 4.8 Graph fingerprints (`instinct-graph`)
 
 - `LabeledGraph`: `u64` node labels, directed or undirected edges, optional edge labels.
 - `wl_refine(g, Rounds)`:
@@ -299,7 +298,7 @@ boundary PUA returns the tied set instead of flipping. `Profile::table_bytes()` 
   spectral or resistance-distance features (they need floats or are not well defined).
 - `label_of(parts)` gives a stable `u64` label from length-prefixed key bytes.
 
-### 4.9 Candidate sets (`pua-core`)
+### 4.9 Candidate sets (`instinct-core`)
 
 `CandidateSet::new(ids)` sorts ids ascending and rejects duplicates (`CandidateError::Duplicate`).
 `question(name)` makes a `Choice` whose option *i* is the *i*-th id, so candidates go through the
@@ -326,7 +325,8 @@ Exact ties rank the lower id first and abstain. Input order never matters (§5 r
 5. `DataVersion` = blake3 over a domain tag plus named fields. It covers everything that can change an
    answer: data fingerprints, normalize config, Unicode version, seed tags, D, WL tag and rounds, and
    the profile table. It goes into every `Decision` and replay record.
-6. Consumers journal the `Decision` (via `pua-explain`), not a second copy of their text.
+   Historical hash and wire domain tags remain frozen; changing them changes `DataVersion` and golden replay bytes.
+6. Consumers journal the `Decision` (via `instinct-explain`), not a second copy of their text.
 
 ### 5.1 Tests that enforce it
 
@@ -351,7 +351,7 @@ Exact ties rank the lower id first and abstain. Input order never matters (§5 r
 
 - An `Answer` must be **invariant** under the consumer's declared moves (for example case, spacing,
   NFC/NFD, punctuation runs, candidate order). A `Span` is **equivariant**: it moves with the text.
-- **Canonicalize first.** Declared invariances are enforced in `pua-text` (and by sorting, for sets).
+- **Canonicalize first.** Declared invariances are enforced in `instinct-text` (and by sorting, for sets).
   If `normalize(x') == normalize(x)` exactly, every later stage inherits the invariance. No later
   stage adds its own invariance logic.
 - **Exact equality.** The path is integer-only, so tests use `==`. Any difference is a bug, not
@@ -383,11 +383,11 @@ tables now live in the consumer repos:
 
 | § | Was | Now |
 |---|---|---|
-| 6.1 | `pua-steer`: delivery advice (queue / steer / interrupt), `AutoApply::Never` on interrupt | hexuria/nativechat `crates/autosteer` (#194) |
-| 6.2 | `pua-gateway`: request shape features | hexuria/open-ai-gateway `crates/oag-shape` (#149) |
-| 6.3 | `pua-bir`: TIN format repair, Ñ-safe names, catalog, layout fingerprint | hexuria/buwiz-forms `crates/bir-suggest` (#67) |
-| 6.4 | `pua-ocr`: COR label extraction | hexuria/buwiz-forms `crates/bir-cor-extract` (#67) |
-| 6.5 | `pua-toolbox`: tool choice | removed; use `CandidateSet` + `overlap` (§4.9) |
+| 6.1 | `instinct-steer`: delivery advice (queue / steer / interrupt), `AutoApply::Never` on interrupt | hexuria/nativechat `crates/autosteer` (#194) |
+| 6.2 | `instinct-gateway`: request shape features | hexuria/open-ai-gateway `crates/oag-shape` (#149) |
+| 6.3 | `instinct-bir`: TIN format repair, Ñ-safe names, catalog, layout fingerprint | hexuria/buwiz-forms `crates/bir-suggest` (#67) |
+| 6.4 | `instinct-ocr`: COR label extraction | hexuria/buwiz-forms `crates/bir-cor-extract` (#67) |
+| 6.5 | `instinct-toolbox`: tool choice | removed; use `CandidateSet` + `overlap` (§4.9) |
 
 The old text is at `git show 677d78c:docs/spec.md`. The engine keeps one synthetic copy of the
 delivery data as a regression fixture (§4.4).
@@ -400,22 +400,22 @@ delivery data as a regression fixture (§4.4).
 - XOR-bind is self-inverse.
 - Codebook cleanup is invariant under entry order (sorted by id).
 
-## 7. Integrating PUA in a consumer
+## 7. Integrating Instinct in a consumer
 
-1. Check exact signals first. PUA is not consulted when the answer is already known.
+1. Check exact signals first. Instinct is not consulted when the answer is already known.
 2. Build the classifier once (`RuleClassifier::new`) from your data. Fail CI if the data doesn't load.
 3. Call `decide(text, profile)`. Map the chosen option label to your action. Treat `Abstain` as
    "today's default" or show the ranked options.
-4. Journal the `Decision` with `pua-explain` and keep a golden journal plus a labelled eval in your
+4. Journal the `Decision` with `instinct-explain` and keep a golden journal plus a labelled eval in your
    repo.
-5. Put product policy in your types (e.g. NativeChat's `AutoApply`), not in PUA.
+5. Put product policy in your types (e.g. NativeChat's `AutoApply`), not in Instinct.
 
 ## 8. Escalation to a heavier tier (no silent fallback)
 
-Escalation is consumer code. PUA's part is that an abstain carries the same `Question` and every
+Escalation is consumer code. Instinct's part is that an abstain carries the same `Question` and every
 option ranked:
 
-- **Same shape both ways.** The consumer sends PUA's `Question` to Jev and parses the reply back into
+- **Same shape both ways.** The consumer sends Instinct's `Question` to Jev and parses the reply back into
   an `Answer` (opengrok-server `opengrok-jev`: `render_question`, `parse_reply`, one float
   conversion).
 - **Guard.** An answer outside the offered options is an error. Consumer vetoes still apply.
@@ -425,7 +425,7 @@ option ranked:
 ## 9. Evaluation
 
 - **Engine:**
-  - the delivery fixture eval (false-positive gate) and golden replay in `pua-rules`
+  - the delivery fixture eval (false-positive gate) and golden replay in `instinct-rules`
   - the HDC capacity table (`docs/hdc-capacity.md`)
   - WL counterexample tests
   
@@ -442,7 +442,7 @@ option ranked:
 ## 11. Open questions
 
 1. Release: tags + `rev` pins only, or also crates.io at 1.0?
-2. Jev input: send PUA's canonical text (exact invariance, lost cues) or the raw text? This is a
+2. Jev input: send Instinct's canonical text (exact invariance, lost cues) or the raw text? This is a
    consumer decision, but it affects replay.
 3. When a consumer brings a codebook, should `RuleClassifier` grow an optional HDC stage? The answer
    needs a second evidence source before any trait.
@@ -450,12 +450,12 @@ option ranked:
 
 ## 12. Reviewer checklist
 
-- [ ] No `pua-*` crate depends on a consumer crate or names a consumer concept. No tokio, axum, sqlx,
+- [ ] No `instinct-*` crate depends on a consumer crate or names a consumer concept. No tokio, axum, sqlx,
       reqwest, hyper or typesafe-sdk.
 - [ ] `scripts/architecture.txt` and crate ceilings are updated in the same change as the crates.
 - [ ] `rust-toolchain.toml` stays on 1.99.0, and `rust-version` stays ≤ 1.99.
 - [ ] No floats, clocks, RNG or unordered maps. `DataVersion` is in every output.
-- [ ] Every declared invariance is enforced in `pua-text` or by sorting, and tests use exact `==`.
+- [ ] Every declared invariance is enforced in `instinct-text` or by sorting, and tests use exact `==`.
 - [ ] Permutation tests are scoped to candidates. Option relabeling is tested as equivariance away
       from ties.
 - [ ] Every returned span indexes the original text. `PEÑA` never becomes `PE A`.

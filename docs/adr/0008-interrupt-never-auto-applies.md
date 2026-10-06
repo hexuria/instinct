@@ -1,9 +1,9 @@
 # ADR 0008: Interrupt never auto-applies, expressed as a type (`AutoApply`)
 
 - Status: accepted; **moved with the code** to hexuria/nativechat `crates/autosteer` (ADR 0010).
-  PUA no longer contains `Advice` or `AutoApply`; the rule is NativeChat's.
+  Instinct no longer contains `Advice` or `AutoApply`; the rule is NativeChat's.
 - Date: 2026-10-05
-- Task: T10 (`pua-steer`)
+- Task: T10 (`instinct-steer`)
 
 ## Context
 

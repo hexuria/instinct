@@ -6,6 +6,9 @@ to public types bumps MAJOR (MINOR while 0.x).
 
 ## [Unreleased]
 
+### Changed
+- Renamed PUA → Instinct: crates `pua-*` → `instinct-*`, repo hexuria/pua → hexuria/instinct. Hash/wire domain tags (`pua-data-version-v1`, `pua-hv1`, …) are frozen and unchanged, so DataVersions and golden journals are byte-identical.
+
 ### Added
 - CI foundation: PR gate, nightly tier, mutants-diff, bench gate, release skeleton, cargo-deny,
   architecture check, Dependabot, CODEOWNERS.
