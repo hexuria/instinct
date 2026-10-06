@@ -5,10 +5,10 @@
 use std::sync::OnceLock;
 
 use libfuzzer_sys::fuzz_target;
-use pua_core::{Confidence, ScorerKind};
-use pua_lexicon::{EntrySpec, Lexicon, LexiconSpec, Repair};
-use pua_rules::{ClassSpec, Repairs, RuleSet, RuleSetSpec, RuleSpec};
-use pua_text::{NormalizeConfig, normalize};
+use instinct_core::{Confidence, ScorerKind};
+use instinct_lexicon::{EntrySpec, Lexicon, LexiconSpec, Repair};
+use instinct_rules::{ClassSpec, Repairs, RuleSet, RuleSetSpec, RuleSpec};
+use instinct_text::{NormalizeConfig, normalize};
 
 fn setup() -> &'static (Lexicon, RuleSet) {
     static S: OnceLock<(Lexicon, RuleSet)> = OnceLock::new();

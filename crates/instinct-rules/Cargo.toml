@@ -1,0 +1,31 @@
+[package]
+name = "instinct-rules"
+description = "Instinct: compiled rule sets (cues, negation, scope) and the RuleClassifier pipeline; no regex in rule data."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[features]
+default = []
+## Deserialize `RuleSetSpec` from consumer data (TOML/JSON). Validation still happens in `RuleSet::new`.
+serde = ["dep:serde", "instinct-core/serde", "instinct-lexicon/serde"]
+
+[dependencies]
+instinct-core.workspace = true
+instinct-lexicon.workspace = true
+instinct-text.workspace = true
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+instinct-explain.workspace = true
+proptest.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true
+unicode-normalization.workspace = true
+toml.workspace = true
+
+[lints]
+workspace = true

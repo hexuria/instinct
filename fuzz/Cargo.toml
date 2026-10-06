@@ -1,7 +1,7 @@
 # cargo-fuzz targets (nightly, dated: see $NIGHTLY in .github/workflows/nightly.yml).
 # Not a workspace member: it needs nightly and libfuzzer-sys. Run: scripts/fuzz-smoke.sh 60
 [package]
-name = "pua-fuzz"
+name = "instinct-fuzz"
 version = "0.0.0"
 edition = "2024"
 publish = false
@@ -15,11 +15,11 @@ members = ["."]
 
 [dependencies]
 libfuzzer-sys = "0.4"
-pua-core = { path = "../crates/pua-core" }
-pua-graph = { path = "../crates/pua-graph", features = ["spd-wl"] }
-pua-lexicon = { path = "../crates/pua-lexicon" }
-pua-rules = { path = "../crates/pua-rules" }
-pua-text = { path = "../crates/pua-text" }
+instinct-core = { path = "../crates/instinct-core" }
+instinct-graph = { path = "../crates/instinct-graph", features = ["spd-wl"] }
+instinct-lexicon = { path = "../crates/instinct-lexicon" }
+instinct-rules = { path = "../crates/instinct-rules" }
+instinct-text = { path = "../crates/instinct-text" }
 
 [[bin]]
 name = "normalize"

@@ -1,15 +1,15 @@
-# PUA: Predictable Universal Advisor. See docs/spec.md and docs/plan.md.
+# Instinct. See docs/spec.md and docs/plan.md.
 [workspace]
 resolver = "3"
 exclude = ["fuzz"]
 members = [
-    "crates/pua-core",
-    "crates/pua-text",
-    "crates/pua-lexicon",
-    "crates/pua-rules",
-    "crates/pua-hdc",
-    "crates/pua-graph",
-    "crates/pua-explain",
+    "crates/instinct-core",
+    "crates/instinct-text",
+    "crates/instinct-lexicon",
+    "crates/instinct-rules",
+    "crates/instinct-hdc",
+    "crates/instinct-graph",
+    "crates/instinct-explain",
     "benches",
 ]
 
@@ -18,18 +18,18 @@ version = "0.0.0"
 edition = "2024"
 rust-version = "1.99"
 license = "MIT"
-repository = "https://github.com/hexuria/pua"
+repository = "https://github.com/hexuria/instinct"
 publish = false
 
 [workspace.dependencies]
 # Internal crates.
-pua-core = { path = "crates/pua-core" }
-pua-text = { path = "crates/pua-text" }
-pua-lexicon = { path = "crates/pua-lexicon" }
-pua-rules = { path = "crates/pua-rules" }
-pua-hdc = { path = "crates/pua-hdc" }
-pua-graph = { path = "crates/pua-graph" }
-pua-explain = { path = "crates/pua-explain" }
+instinct-core = { path = "crates/instinct-core" }
+instinct-text = { path = "crates/instinct-text" }
+instinct-lexicon = { path = "crates/instinct-lexicon" }
+instinct-rules = { path = "crates/instinct-rules" }
+instinct-hdc = { path = "crates/instinct-hdc" }
+instinct-graph = { path = "crates/instinct-graph" }
+instinct-explain = { path = "crates/instinct-explain" }
 
 # External (permissive only; spec §3.1 candidate list). `pure` keeps blake3 free of C/asm builds.
 blake3 = { version = "1.8.7", default-features = false, features = ["pure"] }

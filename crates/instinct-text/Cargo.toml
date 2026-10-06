@@ -1,0 +1,21 @@
+[package]
+name = "instinct-text"
+description = "Instinct: canonicalization with an offset map: NFC, Ñ-preserving folds, protected spans, tokens, sentences, confusables."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+instinct-core.workspace = true
+unicode-normalization.workspace = true
+unicode-segmentation.workspace = true
+unicode-security.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

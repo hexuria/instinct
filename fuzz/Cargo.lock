@@ -78,6 +78,60 @@ dependencies = [
 ]
 
 [[package]]
+name = "instinct-core"
+version = "0.0.0"
+dependencies = [
+ "blake3",
+]
+
+[[package]]
+name = "instinct-fuzz"
+version = "0.0.0"
+dependencies = [
+ "instinct-core",
+ "instinct-graph",
+ "instinct-lexicon",
+ "instinct-rules",
+ "instinct-text",
+ "libfuzzer-sys",
+]
+
+[[package]]
+name = "instinct-graph"
+version = "0.0.0"
+dependencies = [
+ "blake3",
+ "instinct-core",
+]
+
+[[package]]
+name = "instinct-lexicon"
+version = "0.0.0"
+dependencies = [
+ "instinct-core",
+ "instinct-text",
+]
+
+[[package]]
+name = "instinct-rules"
+version = "0.0.0"
+dependencies = [
+ "instinct-core",
+ "instinct-lexicon",
+ "instinct-text",
+]
+
+[[package]]
+name = "instinct-text"
+version = "0.0.0"
+dependencies = [
+ "instinct-core",
+ "unicode-normalization",
+ "unicode-security",
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "jobserver"
 version = "0.1.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -101,60 +155,6 @@ checksum = "a9fd2f41a1cba099f79a0b6b6c35656cf7c03351a7bae8ff0f28f25270f929d2"
 dependencies = [
  "arbitrary",
  "cc",
-]
-
-[[package]]
-name = "pua-core"
-version = "0.0.0"
-dependencies = [
- "blake3",
-]
-
-[[package]]
-name = "pua-fuzz"
-version = "0.0.0"
-dependencies = [
- "libfuzzer-sys",
- "pua-core",
- "pua-graph",
- "pua-lexicon",
- "pua-rules",
- "pua-text",
-]
-
-[[package]]
-name = "pua-graph"
-version = "0.0.0"
-dependencies = [
- "blake3",
- "pua-core",
-]
-
-[[package]]
-name = "pua-lexicon"
-version = "0.0.0"
-dependencies = [
- "pua-core",
- "pua-text",
-]
-
-[[package]]
-name = "pua-rules"
-version = "0.0.0"
-dependencies = [
- "pua-core",
- "pua-lexicon",
- "pua-text",
-]
-
-[[package]]
-name = "pua-text"
-version = "0.0.0"
-dependencies = [
- "pua-core",
- "unicode-normalization",
- "unicode-security",
- "unicode-segmentation",
 ]
 
 [[package]]

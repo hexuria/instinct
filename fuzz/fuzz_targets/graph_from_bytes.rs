@@ -4,7 +4,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use pua_graph::{Edge, LabeledGraph, NodeId, Rounds, spd_wl_refine, wl_refine};
+use instinct_graph::{Edge, LabeledGraph, NodeId, Rounds, spd_wl_refine, wl_refine};
 
 fn build(n: usize, labels: &[u8], edges: &[[u8; 3]], reverse: bool) -> LabeledGraph {
     let mut g = LabeledGraph::new();
