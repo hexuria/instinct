@@ -20,7 +20,7 @@ region via gungraun `setup` / `#[bench]` args.
 - **Metric:** Callgrind instruction count (`Ir`), via [gungraun](https://crates.io/crates/gungraun) 0.20.
 - **Environment:** one CI job measures base then HEAD back-to-back on the same runner
   (`scripts/bench-gate.sh`), sharing one `CARGO_TARGET_DIR`.
-- **Limit:** `Instinct_BENCH_LIMIT` (default `ir=10%`). gungraun exits 3 on a breach.
+- **Limit:** `INSTINCT_BENCH_LIMIT` (default `ir=10%`). gungraun exits 3 on a breach.
 
 ## Decision rule
 
