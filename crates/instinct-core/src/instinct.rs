@@ -944,6 +944,18 @@ mod tests {
     }
 
     #[test]
+    fn affinity_get_rejects_option_overflow_before_flattening() {
+        let question = question(&["a", "b"]);
+        let drives =
+            Drives::new(&[("goal", confidence(700)), ("threat", confidence(800))]).unwrap();
+        let mut affinity = Affinity::new(&question, &drives);
+        affinity
+            .set(DriveIndex::new(1), option(0), confidence(321))
+            .unwrap();
+        assert_eq!(affinity.get(DriveIndex::new(0), option(2)), None);
+    }
+
+    #[test]
     fn drives_index_of_matches_exact_names() {
         let drives =
             Drives::new(&[("goal", confidence(700)), ("threat", confidence(800))]).unwrap();
@@ -987,6 +999,28 @@ mod tests {
         assert_eq!(records[2].contribution(), Millis::new(96).unwrap());
         assert_eq!(records[3].text(), "persist accept +100");
         assert_eq!(records[3].contribution(), Millis::new(100).unwrap());
+    }
+
+    #[test]
+    fn trail_records_use_no_yes_labels_for_noul_questions() {
+        let question = Question::noul("approve?").unwrap();
+        let drives = Drives::new(&[("goal", confidence(1000))]).unwrap();
+        let mut affinity = Affinity::new(&question, &drives);
+        affinity
+            .set(DriveIndex::new(0), option(0), confidence(1000))
+            .unwrap();
+        affinity
+            .set(DriveIndex::new(0), option(1), confidence(1000))
+            .unwrap();
+        let mut evidence = Scores::new(&question);
+        evidence.set(option(0), confidence(600)).unwrap();
+        evidence.set(option(1), confidence(900)).unwrap();
+        let result = arbitrate(&evidence, &drives, &affinity, None, Profile::Fast).unwrap();
+
+        let records = result.trail_records(&drives);
+        assert_eq!(records.len(), 2);
+        assert_eq!(records[0].text(), "no urge 600 dominant goal");
+        assert_eq!(records[1].text(), "yes urge 900 dominant goal");
     }
 
     #[test]
