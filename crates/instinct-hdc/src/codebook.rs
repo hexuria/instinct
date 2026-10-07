@@ -131,12 +131,15 @@ impl<D: Dim> Codebook<D> {
     pub fn decode(&self, acc: &Accumulator<D>, k: usize, floor: Millis) -> Vec<(usize, Millis)> {
         let mut acc = acc.clone();
         let mut out: Vec<(usize, Millis)> = Vec::new();
+        // Already-emitted entries: a flag per entry keeps membership O(1), replacing an O(k)
+        // rescan of `out` for every candidate in every round.
+        let mut used = vec![false; self.len()];
         let d = i64::from(D::BITS);
         for _ in 0..k.min(self.len()) {
             let l1 = acc.l1().max(1);
             let mut best: Option<(i64, usize, i64)> = None;
             for (i, v) in self.vecs.iter().enumerate() {
-                if out.iter().any(|(j, _)| *j == i) {
+                if used[i] {
                     continue;
                 }
                 let dot = acc.dot(v);
@@ -151,6 +154,7 @@ impl<D: Dim> Codebook<D> {
                 break;
             }
             out.push((i, sim));
+            used[i] = true;
             // Round half away from zero.
             let est = if dot >= 0 {
                 (2 * dot + d) / (2 * d)
