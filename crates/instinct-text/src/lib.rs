@@ -35,7 +35,7 @@ use instinct_core::Span;
 use unicode_security::MixedScript;
 use unicode_segmentation::UnicodeSegmentation as _;
 
-use crate::nfc::{Seg, map_range, map_range_verbatim, seg_index};
+use crate::nfc::{Seg, map_range, seg_index};
 pub use crate::protect::ProtectedKind;
 
 /// Largest accepted input (16 MiB). Larger inputs are refused rather than truncated.
@@ -302,10 +302,8 @@ impl Builder<'_> {
         if linear
             && let Some(last) = self.segs.last_mut()
             && last.linear
-            && last.src_end == u32_of(src.start)
-            && last.out_start + (last.src_end - last.src_start) == out_start
         {
-            // Adjacent verbatim piece: extend the run.
+            // Adjacent verbatim piece: extend the run (pushes tile both ranges contiguously).
             last.src_end = u32_of(src.end);
             self.out.push_str(s);
             return;
@@ -435,31 +433,32 @@ pub fn normalize(text: &str, config: NormalizeConfig) -> Result<Normalized<'_>, 
         if let Some(last) = segs.last_mut()
             && last.linear
             && seg.linear
-            && last.src_end == seg.src_start
-            && last.out_start + (last.src_end - last.src_start) == seg.out_start
         {
+            // Adjacent verbatim piece: extend the run (emitted pieces tile both ranges
+            // contiguously).
             last.src_end = seg.src_end;
             return;
         }
         segs.push(seg);
     };
     for sg in &b.segs {
-        let ia = seg_index(&nfc.segs, sg.src_start);
-        let ib = seg_index(&nfc.segs, sg.src_end - 1);
-        if !sg.linear || ia == ib {
-            // One covering NFC segment (or non-verbatim canonical text): a single mapping.
-            let ((a, e), verbatim) =
-                map_range_verbatim(&nfc.segs, sg.src_start, sg.src_end, orig_len);
+        if !sg.linear {
+            // A non-verbatim piece maps to its whole source range in one step.
+            let (a, e) = map_range(&nfc.segs, sg.src_start, sg.src_end, orig_len);
             emit(Seg {
                 out_start: sg.out_start,
                 src_start: a,
                 src_end: e,
-                linear: sg.linear && verbatim,
+                linear: false,
             });
             continue;
         }
+        // A verbatim run is split at the NFC segment boundaries it spans, so a rewritten
+        // combining sequence keeps its boundary (ADR 0006).
+        let ia = seg_index(&nfc.segs, sg.src_start);
+        let last = nfc.segs.partition_point(|s| s.out_start < sg.src_end);
         let mut sub = sg.src_start;
-        for n in ia..=ib {
+        for n in ia..last {
             let seg_end = if n + 1 < nfc.segs.len() {
                 nfc.segs[n + 1].out_start
             } else {
@@ -624,6 +623,154 @@ mod tests {
         assert_eq!(at(1), Span::new(3, 3).unwrap()); // inside a segment: its source end
         assert_eq!(at(2), Span::new(3, 3).unwrap());
         assert_eq!(at(3), Span::new(4, 4).unwrap()); // end of text
+    }
+
+    #[test]
+    fn mid_char_positions_snap_to_the_covering_char() {
+        // U+6728 is 3 canonical bytes at [0,3); positions inside it cover the whole char.
+        let n = normalize("\u{6728}x", NormalizeConfig::default()).unwrap();
+        assert_eq!(n.to_original(1..2), Span::new(0, 3).unwrap());
+        assert_eq!(n.to_original(1..1), Span::new(3, 3).unwrap());
+        // U+6728 at [1,4), "b" at 4.
+        let n = normalize("a\u{6728}b", NormalizeConfig::default()).unwrap();
+        assert_eq!(n.to_original(2..4), Span::new(1, 4).unwrap());
+        assert_eq!(n.to_original(3..3), Span::new(4, 4).unwrap());
+    }
+
+    #[test]
+    fn builder_merges_only_verbatim_runs() {
+        let mut b = Builder {
+            out: String::new(),
+            segs: Vec::new(),
+            src: "ab",
+        };
+        b.push("a", 0..1); // verbatim
+        b.push("c", 0..1); // same length, different bytes: not verbatim, no merge
+        b.push("b", 1..2); // verbatim, but the previous piece is not — still no merge
+        assert_eq!(
+            b.segs,
+            [
+                Seg {
+                    out_start: 0,
+                    src_start: 0,
+                    src_end: 1,
+                    linear: true
+                },
+                Seg {
+                    out_start: 1,
+                    src_start: 0,
+                    src_end: 1,
+                    linear: false
+                },
+                Seg {
+                    out_start: 2,
+                    src_start: 1,
+                    src_end: 2,
+                    linear: true
+                },
+            ]
+        );
+        assert_eq!(b.out, "acb");
+        // An adjacent verbatim piece extends the run.
+        let mut b = Builder {
+            out: String::new(),
+            segs: Vec::new(),
+            src: "ab",
+        };
+        b.push("a", 0..1);
+        b.push("b", 1..2);
+        assert_eq!(
+            b.segs,
+            [Seg {
+                out_start: 0,
+                src_start: 0,
+                src_end: 2,
+                linear: true
+            }]
+        );
+    }
+
+    #[test]
+    fn extend_last_carves_the_punct_back_out_of_a_verbatim_run() {
+        let mut b = Builder {
+            out: String::new(),
+            segs: Vec::new(),
+            src: "ab!!!",
+        };
+        b.push("ab", 0..2);
+        b.push("!", 2..3); // merges into the run
+        b.extend_last(4); // collapsed '!' carves a 1-byte tail
+        assert_eq!(
+            b.segs,
+            [
+                Seg {
+                    out_start: 0,
+                    src_start: 0,
+                    src_end: 2,
+                    linear: true
+                },
+                Seg {
+                    out_start: 2,
+                    src_start: 2,
+                    src_end: 4,
+                    linear: false
+                },
+            ]
+        );
+        b.extend_last(5); // the carved tail absorbs the rest of the run
+        assert_eq!(b.segs[1].src_end, 5);
+        assert!(!b.segs[1].linear);
+        // A 1-byte linear last piece absorbs the run in place instead of carving.
+        let mut b = Builder {
+            out: String::new(),
+            segs: Vec::new(),
+            src: "A!",
+        };
+        b.push("a", 0..1); // folded byte: non-verbatim
+        b.push("!", 1..2); // verbatim, but the previous piece is not — no merge
+        b.extend_last(2);
+        assert_eq!(
+            b.segs,
+            [
+                Seg {
+                    out_start: 0,
+                    src_start: 0,
+                    src_end: 1,
+                    linear: false
+                },
+                Seg {
+                    out_start: 1,
+                    src_start: 1,
+                    src_end: 2,
+                    linear: false
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn verbatim_runs_stay_byte_exact_across_non_verbatim_pieces() {
+        let c = NormalizeConfig::default();
+        // A collapsed whitespace run is one non-verbatim piece; the runs around it are exact.
+        let n = normalize("a  b", c).unwrap();
+        assert_eq!(n.canonical(), "a b");
+        assert_eq!(n.to_original(0..1), Span::new(0, 1).unwrap());
+        assert_eq!(n.to_original(1..2), Span::new(1, 3).unwrap());
+        assert_eq!(n.to_original(2..3), Span::new(3, 4).unwrap());
+        assert_eq!(n.to_original(3..3), Span::new(4, 4).unwrap());
+        // A folded char is non-verbatim; whitespace and the rest stay byte-exact.
+        let n = normalize("A x", c).unwrap();
+        assert_eq!(n.to_original(0..1), Span::new(0, 1).unwrap());
+        assert_eq!(n.to_original(1..2), Span::new(1, 2).unwrap());
+        assert_eq!(n.to_original(2..3), Span::new(2, 3).unwrap());
+        // A verbatim run after a folded char: every interior position is byte-exact.
+        let n = normalize("Abc", c).unwrap();
+        assert_eq!(n.to_original(1..2), Span::new(1, 2).unwrap());
+        assert_eq!(n.to_original(2..3), Span::new(2, 3).unwrap());
+        // Verbatim text after a rewritten combining sequence keeps the boundary.
+        let n = normalize("e\u{301}xy", c).unwrap();
+        assert_eq!(n.to_original(2..3), Span::new(3, 4).unwrap());
+        assert_eq!(n.to_original(3..4), Span::new(4, 5).unwrap());
     }
 
     #[test]

@@ -98,20 +98,12 @@ pub(crate) fn seg_index(segs: &[Seg], out_pos: u32) -> usize {
 }
 
 /// `(src_start, src_end)` covering `out[start..end)`. Empty ranges map to an empty source range.
+///
+/// `start`/`end` are snapped to char boundaries by the caller; a non-linear segment covers at
+/// most one output char, so a boundary position inside it is always its start.
 pub(crate) fn map_range(segs: &[Seg], start: u32, end: u32, src_len: u32) -> (u32, u32) {
-    map_range_verbatim(segs, start, end, src_len).0
-}
-
-/// Like [`map_range`], also reporting whether every covering segment is verbatim — when true,
-/// the mapped source range is byte-identical to the output range (used when composing maps).
-pub(crate) fn map_range_verbatim(
-    segs: &[Seg],
-    start: u32,
-    end: u32,
-    src_len: u32,
-) -> ((u32, u32), bool) {
     if segs.is_empty() {
-        return ((0, 0), true);
+        return (0, 0);
     }
     if start >= end {
         let i = seg_index(segs, start);
@@ -119,12 +111,10 @@ pub(crate) fn map_range_verbatim(
         let p = if s.linear {
             s.src_start
                 .saturating_add(start.saturating_sub(s.out_start))
-        } else if start > s.out_start {
-            s.src_end
         } else {
             s.src_start
         };
-        return ((p.min(src_len), p.min(src_len)), s.linear);
+        return (p.min(src_len), p.min(src_len));
     }
     let ia = seg_index(segs, start);
     let ib = seg_index(segs, end - 1);
@@ -140,8 +130,7 @@ pub(crate) fn map_range_verbatim(
     } else {
         sb.src_end
     };
-    let verbatim = segs[ia..=ib].iter().all(|s| s.linear);
-    ((a, b), verbatim)
+    (a, b)
 }
 
 #[cfg(test)]
