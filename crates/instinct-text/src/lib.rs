@@ -258,17 +258,11 @@ impl<'a> Normalized<'a> {
         // range (start snaps down, end snaps up, an empty range snaps to the next boundary).
         let s = self.canonical.as_str();
         if a == b {
-            while !s.is_char_boundary(a as usize) {
-                a += 1;
-            }
+            a = u32_of(s.ceil_char_boundary(a as usize));
             b = a;
         } else {
-            while !s.is_char_boundary(a as usize) {
-                a -= 1;
-            }
-            while !s.is_char_boundary(b as usize) {
-                b += 1;
-            }
+            a = u32_of(s.floor_char_boundary(a as usize));
+            b = u32_of(s.ceil_char_boundary(b as usize));
         }
         let (s, e) = map_range(&self.segs, a, b, u32_of(self.original.len()));
         Span::new(s, e).unwrap_or_else(|_| Span::new(s, s).unwrap_or_else(|_| empty_span()))
@@ -372,9 +366,13 @@ pub fn normalize(text: &str, config: NormalizeConfig) -> Result<Normalized<'_>, 
     let mut pending_space: Option<Range<usize>> = None;
     let mut last_punct: Option<char> = None;
     let mut span_iter = spans.iter().peekable();
-    let mut i = 0usize;
+    let mut covered = 0usize; // src positions below this were emitted by a protected span
     let mut buf = [0u8; 4];
-    while i < s.len() {
+    for (i, ch) in s.char_indices() {
+        if i < covered {
+            continue;
+        }
+        let w = ch.len_utf8();
         if let Some((r, kind)) = span_iter.peek().filter(|(r, _)| r.start == i).copied() {
             if let Some(ws) = pending_space.take().filter(|_| !b.out.is_empty()) {
                 b.push(" ", ws);
@@ -386,18 +384,13 @@ pub fn normalize(text: &str, config: NormalizeConfig) -> Result<Normalized<'_>, 
             }
             protected_canon.push((start..b.out.len(), *kind, r.clone()));
             last_punct = None;
-            i = r.end;
+            covered = r.end;
             span_iter.next();
             continue;
         }
-        let Some(ch) = s[i..].chars().next() else {
-            break;
-        };
-        let w = ch.len_utf8();
         if ch.is_whitespace() {
             pending_space = Some(pending_space.map_or(i..i + w, |p| p.start..i + w));
             last_punct = None;
-            i += w;
             continue;
         }
         if let Some(ws) = pending_space.take().filter(|_| !b.out.is_empty()) {
@@ -408,7 +401,6 @@ pub fn normalize(text: &str, config: NormalizeConfig) -> Result<Normalized<'_>, 
             && last_punct == Some(ch)
         {
             b.extend_last(i + w);
-            i += w;
             continue;
         }
         last_punct = ch.is_ascii_punctuation().then_some(ch);
@@ -419,7 +411,6 @@ pub fn normalize(text: &str, config: NormalizeConfig) -> Result<Normalized<'_>, 
                 b.push(&lowered, i..i + w);
             }
         }
-        i += w;
     }
 
     // Compose canonical→NFC with NFC→original. A verbatim canonical segment is split at every
