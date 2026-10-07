@@ -209,5 +209,11 @@ mod tests {
         let v = DataVersion::builder("golden").field("k", b"v").finish();
         assert_eq!(v, DataVersion::builder("golden").field("k", b"v").finish());
         assert_eq!(v.as_bytes().len(), 32);
+        // Committed digest: any drift in the field framing, the folded crate version or the
+        // toolchain's Unicode version fails here instead of leaking downstream.
+        assert_eq!(
+            v.to_string(),
+            "17cde40ee06410c6767d1c93fc88ea356ef90a6aeaaa2a1d5befca72fdf8ef3b"
+        );
     }
 }
