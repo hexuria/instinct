@@ -51,7 +51,7 @@ impl ScorerKind {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TrailRecord {
-    step: u16,
+    step: u32,
     stage: StageKind,
     #[cfg_attr(
         feature = "serde",
@@ -116,7 +116,7 @@ impl TrailRecord {
     }
 
     /// 1-based step number.
-    pub fn step(&self) -> u16 {
+    pub fn step(&self) -> u32 {
         self.step
     }
     /// Stage.
@@ -159,9 +159,9 @@ impl Trail {
         Self::default()
     }
 
-    /// Appends a record, assigning the next step number (saturating at `u16::MAX`).
+    /// Appends a record, assigning the next step number (saturating at `u32::MAX`).
     pub fn push(&mut self, mut record: TrailRecord) {
-        record.step = u16::try_from(self.records.len() + 1).unwrap_or(u16::MAX);
+        record.step = u32::try_from(self.records.len() + 1).unwrap_or(u32::MAX);
         self.records.push(record);
     }
 
@@ -214,16 +214,19 @@ mod tests {
     }
 
     #[test]
-    fn step_numbers_saturate_at_u16_max() {
+    fn step_numbers_continue_past_u16_max() {
+        // Steps are u32, so an unbounded trail keeps numbering instead of saturating early.
         let mut t = Trail::new();
         for _ in 0..usize::from(u16::MAX) + 2 {
             t.push(TrailRecord::new(StageKind::Normalize, "x"));
         }
         let rs = t.records();
         assert_eq!(rs.len(), usize::from(u16::MAX) + 2);
-        // Steps are 1-based; every record past the first 65534 keeps step u16::MAX.
-        assert_eq!(rs[usize::from(u16::MAX) - 1].step(), u16::MAX);
-        assert_eq!(rs[usize::from(u16::MAX)].step(), u16::MAX);
-        assert_eq!(rs[usize::from(u16::MAX) + 1].step(), u16::MAX);
+        assert_eq!(rs[usize::from(u16::MAX) - 1].step(), u32::from(u16::MAX));
+        assert_eq!(rs[usize::from(u16::MAX)].step(), u32::from(u16::MAX) + 1);
+        assert_eq!(
+            rs[usize::from(u16::MAX) + 1].step(),
+            u32::from(u16::MAX) + 2
+        );
     }
 }
