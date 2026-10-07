@@ -42,6 +42,7 @@ either killed by a new test or listed below as equivalent, with the reason.
 | instinct-jev (local run, T9; moved to opengrok-server `opengrok-jev`, Phase 2) | `AskedChoice::label`, `ConvertError` Display | `src/tests.rs::wire_choice_labels_and_convert_texts` |
 | instinct-steer (CI mutants-diff on #11, then local; moved to nativechat `crates/autosteer`, Phase 2) | `from_toml` class-order gate; `Input::{as_str,live_runs}` | `src/tests.rs::{class_order_is_pinned,input_accessors}` |
 | instinct-core (CI mutants-diff on #3) | `is_canonical` `>` → `>=`; `Span::contains` `&&` → `\|\|`; `Span::overlaps` `<` → `<=`; `Trail::is_empty` → `true` | same test (Ranked tie order, span relations); `trail::tests` |
+| instinct-text (CI mutants-diff on #29/#30, then local) | mid-char position snapping in `to_original`; `Builder` verbatim detection and run merging; `extend_last` carve/absorb branches; NFC-boundary split arithmetic | `src/lib.rs::tests::{mid_char_positions_snap_to_the_covering_char, builder_merges_only_verbatim_runs, extend_last_carves_the_punct_back_out_of_a_verbatim_run, verbatim_runs_stay_byte_exact_across_non_verbatim_pieces}`; redundant tiling/contiguity guards removed instead |
 
 Text mutants run (T4, local, after the tests above): 216 mutants, 0 missed (15 timeouts are
 loop-step mutants that never terminate and count as detected).

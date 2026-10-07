@@ -465,24 +465,31 @@ mod tests {
         weights: &[i16],
         evidence: &[i16],
     ) -> (Drives, Affinity<'q>, Scores<'q>) {
-        assert_eq!(levels.len(), 3);
-        assert_eq!(weights.len(), 9);
-        assert_eq!(evidence.len(), usize::from(question.arity()));
-        let names = ["goal", "threat", "caution"];
-        let values: Vec<_> = names
-            .iter()
-            .zip(levels)
-            .map(|(name, level)| (*name, confidence(*level)))
+        assert!((1..=MAX_DRIVES).contains(&levels.len()));
+        let arity = usize::from(question.arity());
+        assert_eq!(weights.len(), levels.len() * arity);
+        assert_eq!(evidence.len(), arity);
+        let names: Vec<String> = (0..levels.len())
+            .map(|d| {
+                ["goal", "threat", "caution"]
+                    .get(d)
+                    .map_or_else(|| format!("drive{d}"), ToString::to_string)
+            })
             .collect();
-        let drives = Drives::new(&values).unwrap();
+        let named: Vec<(String, Confidence)> = names
+            .into_iter()
+            .zip(levels)
+            .map(|(name, level)| (name, confidence(*level)))
+            .collect();
+        let drives = Drives::new(&named).unwrap();
         let mut affinity = Affinity::new(question, &drives);
-        for drive in 0..3 {
-            for option in 0..usize::from(question.arity()) {
+        for drive in 0..levels.len() {
+            for option in 0..arity {
                 affinity
                     .set(
                         DriveIndex::new(u8::try_from(drive).unwrap()),
                         OptionIndex::new(u16::try_from(option).unwrap()),
-                        confidence(weights[drive * 3 + option]),
+                        confidence(weights[drive * arity + option]),
                     )
                     .unwrap();
             }
@@ -499,9 +506,13 @@ mod tests {
         (drives, affinity, scores)
     }
 
-    fn raw_urges(levels: &[i16], weights: &[i16], evidence: &[i16]) -> Vec<Confidence> {
-        let question = question(&["a", "b", "c"]);
-        let (drives, affinity, scores) = setup(&question, levels, weights, evidence);
+    fn raw_urges(
+        question: &Question,
+        levels: &[i16],
+        weights: &[i16],
+        evidence: &[i16],
+    ) -> Vec<Confidence> {
+        let (drives, affinity, scores) = setup(question, levels, weights, evidence);
         arbitrate(&scores, &drives, &affinity, None, Profile::Standard)
             .unwrap()
             .urges()
@@ -515,6 +526,47 @@ mod tests {
             Just(Profile::Standard),
             Just(Profile::Deep)
         ]
+    }
+
+    /// Any question kind: Noul (fixed 2 options), Choice or Score with 2..=8 labels
+    /// (a `BTreeSet` keeps labels distinct, as `Options` requires).
+    fn any_question() -> impl Strategy<Value = Question> {
+        prop_oneof![
+            Just(Question::noul("q?").unwrap()),
+            prop::collection::btree_set("[a-z]{1,6}", 2..=8usize).prop_map(|v| Question::choice(
+                "q",
+                &Vec::from_iter(v)
+            )
+            .unwrap()),
+            prop::collection::btree_set("[a-z]{1,6}", 2..=8usize).prop_map(|v| Question::score(
+                "q",
+                &Vec::from_iter(v)
+            )
+            .unwrap()),
+        ]
+    }
+
+    /// A full arbitration case: question kind and arity, drive levels (`1..=MAX_DRIVES`),
+    /// drive×option weights and per-option evidence.
+    #[allow(clippy::type_complexity)]
+    fn case() -> impl Strategy<Value = (Question, Vec<i16>, Vec<i16>, Vec<i16>)> {
+        any_question().prop_flat_map(|q| {
+            let arity = usize::from(q.arity());
+            prop::collection::vec(0i16..=1000, 1..=MAX_DRIVES).prop_flat_map(move |levels| {
+                let cells = levels.len() * arity;
+                (
+                    Just(q.clone()),
+                    Just(levels),
+                    prop::collection::vec(0i16..=1000, cells),
+                    prop::collection::vec(0i16..=1000, arity),
+                )
+            })
+        })
+    }
+
+    /// Map a drawn `Index` onto `question`'s options.
+    fn pick(question: &Question, i: prop::sample::Index) -> OptionIndex {
+        option(u16::try_from(i.index(usize::from(question.arity()))).unwrap())
     }
 
     #[test]
@@ -1034,27 +1086,22 @@ mod tests {
     proptest! {
         #[test]
         fn arbitration_is_deterministic(
-            levels in prop::collection::vec(0i16..=1000, 3..4),
-            weights in prop::collection::vec(0i16..=1000, 9..10),
-            evidence_values in prop::collection::vec(0i16..=1000, 3..4),
-            incumbent in prop::option::of(0u16..3),
+            (question, levels, weights, evidence_values) in case(),
+            incumbent in prop::option::of(any::<prop::sample::Index>()),
             profile in profile(),
         ) {
-            let question = question(&["a", "b", "c"]);
+            let incumbent = incumbent.map(|i| pick(&question, i));
             let (drives, affinity, evidence) = setup(&question, &levels, &weights, &evidence_values);
-            let first = arbitrate(&evidence, &drives, &affinity, incumbent.map(option), profile).unwrap();
-            let second = arbitrate(&evidence, &drives, &affinity, incumbent.map(option), profile).unwrap();
+            let first = arbitrate(&evidence, &drives, &affinity, incumbent, profile).unwrap();
+            let second = arbitrate(&evidence, &drives, &affinity, incumbent, profile).unwrap();
             prop_assert_eq!(first, second);
         }
 
         #[test]
         fn without_incumbent_answer_is_the_single_decide_gate(
-            levels in prop::collection::vec(0i16..=1000, 3..4),
-            weights in prop::collection::vec(0i16..=1000, 9..10),
-            evidence_values in prop::collection::vec(0i16..=1000, 3..4),
+            (question, levels, weights, evidence_values) in case(),
             profile in profile(),
         ) {
-            let question = question(&["a", "b", "c"]);
             let (drives, affinity, evidence) = setup(&question, &levels, &weights, &evidence_values);
             let result = arbitrate(&evidence, &drives, &affinity, None, profile).unwrap();
             prop_assert_eq!(result.answer(), &decide(result.urges(), profile));
@@ -1062,44 +1109,44 @@ mod tests {
 
         #[test]
         fn raising_a_drive_affinity_or_evidence_never_lowers_urge(
-            levels in prop::collection::vec(0i16..=1000, 3..4),
-            weights in prop::collection::vec(0i16..=1000, 9..10),
-            evidence_values in prop::collection::vec(0i16..=1000, 3..4),
-            drive_index in 0usize..3,
-            option_index in 0usize..3,
+            (question, levels, weights, evidence_values) in case(),
+            drive_i in any::<prop::sample::Index>(),
+            option_i in any::<prop::sample::Index>(),
             increase in 0i16..=1000,
         ) {
-            let before = raw_urges(&levels, &weights, &evidence_values);
+            let arity = usize::from(question.arity());
+            let drive_index = drive_i.index(levels.len());
+            let option_index = option_i.index(arity);
+            let before = raw_urges(&question, &levels, &weights, &evidence_values);
 
             let mut raised_levels = levels.clone();
             raised_levels[drive_index] = (raised_levels[drive_index] + increase).min(1000);
-            let after = raw_urges(&raised_levels, &weights, &evidence_values);
+            let after = raw_urges(&question, &raised_levels, &weights, &evidence_values);
             prop_assert!(after.iter().zip(&before).all(|(new, old)| new >= old));
 
             let mut raised_weights = weights.clone();
-            let weight_index = drive_index * 3 + option_index;
+            let weight_index = drive_index * arity + option_index;
             raised_weights[weight_index] = (raised_weights[weight_index] + increase).min(1000);
-            let after = raw_urges(&levels, &raised_weights, &evidence_values);
+            let after = raw_urges(&question, &levels, &raised_weights, &evidence_values);
             prop_assert!(after.iter().zip(&before).all(|(new, old)| new >= old));
 
             let mut raised_evidence = evidence_values.clone();
             raised_evidence[option_index] = (raised_evidence[option_index] + increase).min(1000);
-            let after = raw_urges(&levels, &weights, &raised_evidence);
+            let after = raw_urges(&question, &levels, &weights, &raised_evidence);
             prop_assert!(after.iter().zip(&before).all(|(new, old)| new >= old));
         }
 
         #[test]
         fn urges_are_bounded_by_evidence_and_best_pull(
-            levels in prop::collection::vec(0i16..=1000, 3..4),
-            weights in prop::collection::vec(0i16..=1000, 9..10),
-            evidence_values in prop::collection::vec(0i16..=1000, 3..4),
+            (question, levels, weights, evidence_values) in case(),
         ) {
-            let urges = raw_urges(&levels, &weights, &evidence_values);
-            for option_index in 0..3 {
-                let best_pull = (0..3)
+            let arity = usize::from(question.arity());
+            let urges = raw_urges(&question, &levels, &weights, &evidence_values);
+            for option_index in 0..arity {
+                let best_pull = (0..levels.len())
                     .map(|drive_index| {
                         i32::from(levels[drive_index])
-                            * i32::from(weights[drive_index * 3 + option_index])
+                            * i32::from(weights[drive_index * arity + option_index])
                             / 1000
                     })
                     .max()
@@ -1111,11 +1158,9 @@ mod tests {
 
         #[test]
         fn zero_evidence_is_vacuum(
-            levels in prop::collection::vec(0i16..=1000, 3..4),
-            weights in prop::collection::vec(0i16..=1000, 9..10),
-            evidence_values in prop::collection::vec(0i16..=1000, 3..4),
+            (question, levels, weights, evidence_values) in case(),
         ) {
-            let urges = raw_urges(&levels, &weights, &evidence_values);
+            let urges = raw_urges(&question, &levels, &weights, &evidence_values);
             for (score, urge) in evidence_values.iter().zip(urges) {
                 if *score == 0 {
                     prop_assert_eq!(urge, Confidence::ZERO);
@@ -1125,15 +1170,13 @@ mod tests {
 
         #[test]
         fn answer_shape_is_bounded_and_abstain_ranks_every_option(
-            levels in prop::collection::vec(0i16..=1000, 3..4),
-            weights in prop::collection::vec(0i16..=1000, 9..10),
-            evidence_values in prop::collection::vec(0i16..=1000, 3..4),
-            incumbent in prop::option::of(0u16..3),
+            (question, levels, weights, evidence_values) in case(),
+            incumbent in prop::option::of(any::<prop::sample::Index>()),
             profile in profile(),
         ) {
-            let question = question(&["a", "b", "c"]);
+            let incumbent = incumbent.map(|i| pick(&question, i));
             let (drives, affinity, evidence) = setup(&question, &levels, &weights, &evidence_values);
-            let answer = arbitrate(&evidence, &drives, &affinity, incumbent.map(option), profile).unwrap().into_answer();
+            let answer = arbitrate(&evidence, &drives, &affinity, incumbent, profile).unwrap().into_answer();
             if let Some(chosen) = answer.chosen() {
                 prop_assert!(chosen.get() < question.arity());
             }
@@ -1148,21 +1191,18 @@ mod tests {
 
         #[test]
         fn persistence_only_changes_the_incumbent_score(
-            levels in prop::collection::vec(0i16..=1000, 3..4),
-            weights in prop::collection::vec(0i16..=1000, 9..10),
-            evidence_values in prop::collection::vec(0i16..=1000, 3..4),
-            incumbent in 0u16..3,
+            (question, levels, weights, evidence_values) in case(),
+            incumbent in any::<prop::sample::Index>(),
             profile in profile(),
         ) {
-            let question = question(&["a", "b", "c"]);
+            let incumbent = pick(&question, incumbent);
             let (drives, affinity, evidence) = setup(&question, &levels, &weights, &evidence_values);
-            let result = arbitrate(&evidence, &drives, &affinity, Some(option(incumbent)), profile).unwrap();
+            let result = arbitrate(&evidence, &drives, &affinity, Some(incumbent), profile).unwrap();
             let mut expected = result.urges().clone();
-            let index = option(incumbent);
-            if let Some(raw) = expected.get(index)
+            if let Some(raw) = expected.get(incumbent)
                 && raw >= profile.thresholds().min_confidence
             {
-                expected.set(index, raw.saturating_add(profile.thresholds().min_margin)).unwrap();
+                expected.set(incumbent, raw.saturating_add(profile.thresholds().min_margin)).unwrap();
             }
             prop_assert_eq!(result.answer(), &decide(&expected, profile));
         }

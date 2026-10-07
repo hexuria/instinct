@@ -801,8 +801,15 @@ fn question_sentences(text: &Normalized<'_>) -> Vec<bool> {
             .get(i + 1)
             .map_or(canon.len(), |n| n.canonical_range().start);
         let q = canon.get(from..to).is_some_and(|tail| {
-            tail.char_indices()
-                .any(|(k, c)| c == '?' && !protected.iter().any(|p| p.contains(&(from + k))))
+            tail.char_indices().any(|(k, c)| {
+                // Protected spans are sorted: the first span ending after a position is the
+                // only one that can contain it.
+                let pos = from + k;
+                let covered = protected
+                    .get(protected.partition_point(|p| p.end <= pos))
+                    .is_some_and(|p| p.start <= pos);
+                c == '?' && !covered
+            })
         });
         if let Some(slot) = out.get_mut(t.sentence() as usize) {
             *slot = q;

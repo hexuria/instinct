@@ -35,7 +35,7 @@ use instinct_core::Span;
 use unicode_security::MixedScript;
 use unicode_segmentation::UnicodeSegmentation as _;
 
-use crate::nfc::{Seg, map_range};
+use crate::nfc::{Seg, map_range, seg_index};
 pub use crate::protect::ProtectedKind;
 
 /// Largest accepted input (16 MiB). Larger inputs are refused rather than truncated.
@@ -251,8 +251,19 @@ impl<'a> Normalized<'a> {
     /// rewrote a combining sequence, the span widens to that whole sequence (ADR 0006).
     pub fn to_original(&self, canon: Range<usize>) -> Span {
         let len = u32_of(self.canonical.len());
-        let a = u32_of(canon.start).min(len);
-        let b = u32_of(canon.end).min(len).max(a);
+        let mut a = u32_of(canon.start).min(len);
+        let mut b = u32_of(canon.end).min(len).max(a);
+        // Snap interior positions to canonical char boundaries, matching the piece boundaries
+        // the segment map was built at: a byte offset mid-char maps to the covering char's
+        // range (start snaps down, end snaps up, an empty range snaps to the next boundary).
+        let s = self.canonical.as_str();
+        if a == b {
+            a = u32_of(s.ceil_char_boundary(a as usize));
+            b = a;
+        } else {
+            a = u32_of(s.floor_char_boundary(a as usize));
+            b = u32_of(s.ceil_char_boundary(b as usize));
+        }
         let (s, e) = map_range(&self.segs, a, b, u32_of(self.original.len()));
         Span::new(s, e).unwrap_or_else(|_| Span::new(s, s).unwrap_or_else(|_| empty_span()))
     }
@@ -266,28 +277,60 @@ fn u32_of(n: usize) -> u32 {
     u32::try_from(n).unwrap_or(u32::MAX)
 }
 
-struct Builder {
+struct Builder<'a> {
     out: String,
     segs: Vec<Seg>,
+    /// The NFC text the `src` ranges index into, for verbatim detection.
+    src: &'a str,
 }
 
-impl Builder {
-    /// Appends `s`, mapped to the NFC range `src`.
+impl Builder<'_> {
+    /// Appends `s`, mapped to the NFC range `src`. Contiguous verbatim runs are coalesced
+    /// into one segment (offsets stay byte-exact — the run maps 1:1).
     fn push(&mut self, s: &str, src: Range<usize>) {
         if s.is_empty() {
             return;
         }
+        let linear = s.len() == src.len() && self.src.get(src.clone()) == Some(s);
+        let out_start = u32_of(self.out.len());
+        if linear
+            && let Some(last) = self.segs.last_mut()
+            && last.linear
+        {
+            // Adjacent verbatim piece: extend the run (pushes tile both ranges contiguously).
+            last.src_end = u32_of(src.end);
+            self.out.push_str(s);
+            return;
+        }
         self.segs.push(Seg {
-            out_start: u32_of(self.out.len()),
+            out_start,
             src_start: u32_of(src.start),
             src_end: u32_of(src.end),
+            linear,
         });
         self.out.push_str(s);
     }
-    /// Extends the last segment's source to `end` (a collapsed run absorbed into it).
+    /// Extends the last emitted piece's source to `end` (a collapsed punct run absorbed into
+    /// it). The last piece is always one ASCII punct byte: when it was folded into a verbatim
+    /// run, carve it back out so the absorbed (non-verbatim) range keeps its own boundary.
     fn extend_last(&mut self, end: usize) {
-        if let Some(last) = self.segs.last_mut() {
-            last.src_end = last.src_end.max(u32_of(end));
+        let end = u32_of(end);
+        let Some(last) = self.segs.last_mut() else {
+            return;
+        };
+        if last.linear && last.src_end - last.src_start > 1 {
+            let tail = Seg {
+                out_start: last.out_start + (last.src_end - last.src_start) - 1,
+                src_start: last.src_end - 1,
+                src_end: end,
+                linear: false,
+            };
+            last.src_end -= 1;
+            self.segs.push(tail);
+        } else {
+            last.src_end = last.src_end.max(end);
+            // The absorbed source was not emitted, so the segment is no longer verbatim.
+            last.linear = false;
         }
     }
 }
@@ -316,15 +359,20 @@ pub fn normalize(text: &str, config: NormalizeConfig) -> Result<Normalized<'_>, 
 
     let mut b = Builder {
         out: String::with_capacity(s.len()),
-        segs: Vec::with_capacity(s.len()),
+        segs: Vec::new(),
+        src: s,
     };
     let mut protected_canon: Vec<(Range<usize>, ProtectedKind, Range<usize>)> = Vec::new();
     let mut pending_space: Option<Range<usize>> = None;
     let mut last_punct: Option<char> = None;
     let mut span_iter = spans.iter().peekable();
-    let mut i = 0usize;
+    let mut covered = 0usize; // src positions below this were emitted by a protected span
     let mut buf = [0u8; 4];
-    while i < s.len() {
+    for (i, ch) in s.char_indices() {
+        if i < covered {
+            continue;
+        }
+        let w = ch.len_utf8();
         if let Some((r, kind)) = span_iter.peek().filter(|(r, _)| r.start == i).copied() {
             if let Some(ws) = pending_space.take().filter(|_| !b.out.is_empty()) {
                 b.push(" ", ws);
@@ -336,18 +384,13 @@ pub fn normalize(text: &str, config: NormalizeConfig) -> Result<Normalized<'_>, 
             }
             protected_canon.push((start..b.out.len(), *kind, r.clone()));
             last_punct = None;
-            i = r.end;
+            covered = r.end;
             span_iter.next();
             continue;
         }
-        let Some(ch) = s[i..].chars().next() else {
-            break;
-        };
-        let w = ch.len_utf8();
         if ch.is_whitespace() {
             pending_space = Some(pending_space.map_or(i..i + w, |p| p.start..i + w));
             last_punct = None;
-            i += w;
             continue;
         }
         if let Some(ws) = pending_space.take().filter(|_| !b.out.is_empty()) {
@@ -358,7 +401,6 @@ pub fn normalize(text: &str, config: NormalizeConfig) -> Result<Normalized<'_>, 
             && last_punct == Some(ch)
         {
             b.extend_last(i + w);
-            i += w;
             continue;
         }
         last_punct = ch.is_ascii_punctuation().then_some(ch);
@@ -369,23 +411,61 @@ pub fn normalize(text: &str, config: NormalizeConfig) -> Result<Normalized<'_>, 
                 b.push(&lowered, i..i + w);
             }
         }
-        i += w;
     }
 
-    // Compose canonical→NFC with NFC→original.
+    // Compose canonical→NFC with NFC→original. A verbatim canonical segment is split at every
+    // NFC segment boundary it spans (a rewritten combining sequence owns its source range);
+    // adjacent verbatim pieces then merge back into runs, so interior offsets stay byte-exact
+    // while rewritten sequences keep their boundaries.
     let orig_len = u32_of(text.len());
-    let segs: Vec<Seg> = b
-        .segs
-        .iter()
-        .map(|sg| {
+    let nfc_len = u32_of(nfc.text.len());
+    let mut segs: Vec<Seg> = Vec::new();
+    let mut emit = |seg: Seg| {
+        if let Some(last) = segs.last_mut()
+            && last.linear
+            && seg.linear
+        {
+            // Adjacent verbatim piece: extend the run (emitted pieces tile both ranges
+            // contiguously).
+            last.src_end = seg.src_end;
+            return;
+        }
+        segs.push(seg);
+    };
+    for sg in &b.segs {
+        if !sg.linear {
+            // A non-verbatim piece maps to its whole source range in one step.
             let (a, e) = map_range(&nfc.segs, sg.src_start, sg.src_end, orig_len);
-            Seg {
+            emit(Seg {
                 out_start: sg.out_start,
                 src_start: a,
                 src_end: e,
-            }
-        })
-        .collect();
+                linear: false,
+            });
+            continue;
+        }
+        // A verbatim run is split at the NFC segment boundaries it spans, so a rewritten
+        // combining sequence keeps its boundary (ADR 0006).
+        let ia = seg_index(&nfc.segs, sg.src_start);
+        let last = nfc.segs.partition_point(|s| s.out_start < sg.src_end);
+        let mut sub = sg.src_start;
+        for n in ia..last {
+            let seg_end = if n + 1 < nfc.segs.len() {
+                nfc.segs[n + 1].out_start
+            } else {
+                nfc_len
+            };
+            let sub_end = seg_end.min(sg.src_end);
+            let (a, e) = map_range(&nfc.segs[n..=n], sub, sub_end, orig_len);
+            emit(Seg {
+                out_start: sg.out_start + (sub - sg.src_start),
+                src_start: a,
+                src_end: e,
+                linear: nfc.segs[n].linear,
+            });
+            sub = sub_end;
+        }
+    }
     let mut n = Normalized {
         original: text,
         config,
@@ -417,10 +497,15 @@ fn tokenize(n: &mut Normalized<'_>) {
             continue;
         }
         let end = start + word.len();
+        // Protected spans are sorted by canonical range: the first span ending after `start`
+        // is the only one that can overlap the token.
+        let candidate = n
+            .protected
+            .partition_point(|p| (p.canon.1 as usize) <= start);
         let zone = n
             .protected
-            .iter()
-            .find(|p| (p.canon.0 as usize) < end && start < p.canon.1 as usize)
+            .get(candidate)
+            .filter(|p| (p.canon.0 as usize) < end)
             .map_or(Zone::Free, |p| Zone::Protected(p.kind));
         let sentence = u32_of(sentences.partition_point(|s| *s <= start).saturating_sub(1));
         let (confusable, skeleton) = confusable_of(word);
@@ -529,6 +614,154 @@ mod tests {
         assert_eq!(at(1), Span::new(3, 3).unwrap()); // inside a segment: its source end
         assert_eq!(at(2), Span::new(3, 3).unwrap());
         assert_eq!(at(3), Span::new(4, 4).unwrap()); // end of text
+    }
+
+    #[test]
+    fn mid_char_positions_snap_to_the_covering_char() {
+        // U+6728 is 3 canonical bytes at [0,3); positions inside it cover the whole char.
+        let n = normalize("\u{6728}x", NormalizeConfig::default()).unwrap();
+        assert_eq!(n.to_original(1..2), Span::new(0, 3).unwrap());
+        assert_eq!(n.to_original(1..1), Span::new(3, 3).unwrap());
+        // U+6728 at [1,4), "b" at 4.
+        let n = normalize("a\u{6728}b", NormalizeConfig::default()).unwrap();
+        assert_eq!(n.to_original(2..4), Span::new(1, 4).unwrap());
+        assert_eq!(n.to_original(3..3), Span::new(4, 4).unwrap());
+    }
+
+    #[test]
+    fn builder_merges_only_verbatim_runs() {
+        let mut b = Builder {
+            out: String::new(),
+            segs: Vec::new(),
+            src: "ab",
+        };
+        b.push("a", 0..1); // verbatim
+        b.push("c", 0..1); // same length, different bytes: not verbatim, no merge
+        b.push("b", 1..2); // verbatim, but the previous piece is not — still no merge
+        assert_eq!(
+            b.segs,
+            [
+                Seg {
+                    out_start: 0,
+                    src_start: 0,
+                    src_end: 1,
+                    linear: true
+                },
+                Seg {
+                    out_start: 1,
+                    src_start: 0,
+                    src_end: 1,
+                    linear: false
+                },
+                Seg {
+                    out_start: 2,
+                    src_start: 1,
+                    src_end: 2,
+                    linear: true
+                },
+            ]
+        );
+        assert_eq!(b.out, "acb");
+        // An adjacent verbatim piece extends the run.
+        let mut b = Builder {
+            out: String::new(),
+            segs: Vec::new(),
+            src: "ab",
+        };
+        b.push("a", 0..1);
+        b.push("b", 1..2);
+        assert_eq!(
+            b.segs,
+            [Seg {
+                out_start: 0,
+                src_start: 0,
+                src_end: 2,
+                linear: true
+            }]
+        );
+    }
+
+    #[test]
+    fn extend_last_carves_the_punct_back_out_of_a_verbatim_run() {
+        let mut b = Builder {
+            out: String::new(),
+            segs: Vec::new(),
+            src: "ab!!!",
+        };
+        b.push("ab", 0..2);
+        b.push("!", 2..3); // merges into the run
+        b.extend_last(4); // collapsed '!' carves a 1-byte tail
+        assert_eq!(
+            b.segs,
+            [
+                Seg {
+                    out_start: 0,
+                    src_start: 0,
+                    src_end: 2,
+                    linear: true
+                },
+                Seg {
+                    out_start: 2,
+                    src_start: 2,
+                    src_end: 4,
+                    linear: false
+                },
+            ]
+        );
+        b.extend_last(5); // the carved tail absorbs the rest of the run
+        assert_eq!(b.segs[1].src_end, 5);
+        assert!(!b.segs[1].linear);
+        // A 1-byte linear last piece absorbs the run in place instead of carving.
+        let mut b = Builder {
+            out: String::new(),
+            segs: Vec::new(),
+            src: "A!",
+        };
+        b.push("a", 0..1); // folded byte: non-verbatim
+        b.push("!", 1..2); // verbatim, but the previous piece is not — no merge
+        b.extend_last(2);
+        assert_eq!(
+            b.segs,
+            [
+                Seg {
+                    out_start: 0,
+                    src_start: 0,
+                    src_end: 1,
+                    linear: false
+                },
+                Seg {
+                    out_start: 1,
+                    src_start: 1,
+                    src_end: 2,
+                    linear: false
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn verbatim_runs_stay_byte_exact_across_non_verbatim_pieces() {
+        let c = NormalizeConfig::default();
+        // A collapsed whitespace run is one non-verbatim piece; the runs around it are exact.
+        let n = normalize("a  b", c).unwrap();
+        assert_eq!(n.canonical(), "a b");
+        assert_eq!(n.to_original(0..1), Span::new(0, 1).unwrap());
+        assert_eq!(n.to_original(1..2), Span::new(1, 3).unwrap());
+        assert_eq!(n.to_original(2..3), Span::new(3, 4).unwrap());
+        assert_eq!(n.to_original(3..3), Span::new(4, 4).unwrap());
+        // A folded char is non-verbatim; whitespace and the rest stay byte-exact.
+        let n = normalize("A x", c).unwrap();
+        assert_eq!(n.to_original(0..1), Span::new(0, 1).unwrap());
+        assert_eq!(n.to_original(1..2), Span::new(1, 2).unwrap());
+        assert_eq!(n.to_original(2..3), Span::new(2, 3).unwrap());
+        // A verbatim run after a folded char: every interior position is byte-exact.
+        let n = normalize("Abc", c).unwrap();
+        assert_eq!(n.to_original(1..2), Span::new(1, 2).unwrap());
+        assert_eq!(n.to_original(2..3), Span::new(2, 3).unwrap());
+        // Verbatim text after a rewritten combining sequence keeps the boundary.
+        let n = normalize("e\u{301}xy", c).unwrap();
+        assert_eq!(n.to_original(2..3), Span::new(3, 4).unwrap());
+        assert_eq!(n.to_original(3..4), Span::new(4, 5).unwrap());
     }
 
     #[test]
