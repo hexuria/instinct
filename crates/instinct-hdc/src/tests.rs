@@ -95,10 +95,15 @@ fn encoder_is_a_pure_function_of_its_inputs() {
         e.encode::<D1024>("a"),
         Encoder::new("other", 1).encode::<D1024>("a")
     );
-    // The separator keeps namespace and symbol apart.
+    // Length-prefixing keeps namespace and symbol apart, including where a 0x1f byte used to
+    // alias the old separator (`a\x1fb‖c` vs `a‖b\x1fc` hashed identically).
     assert_ne!(
         Encoder::new("ab", 1).seed("c"),
         Encoder::new("a", 1).seed("bc")
+    );
+    assert_ne!(
+        Encoder::new("a\x1fb", 1).seed("c"),
+        Encoder::new("a", 1).seed("b\x1fc")
     );
     assert_eq!(e.namespace(), "test");
     assert_eq!(e.version(), 1);
