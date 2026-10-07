@@ -8,12 +8,15 @@
 use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::{IsNormalized, UnicodeNormalization, is_nfc_quick};
 
-/// `nfc[nfc_start..next.nfc_start)` came from `orig[orig_start..orig_end)`.
+/// `nfc[out_start..next.out_start)` came from `orig[src_start..src_end)`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct Seg {
     pub(crate) out_start: u32,
     pub(crate) src_start: u32,
     pub(crate) src_end: u32,
+    /// The output is byte-identical to the source range (a verbatim run), so positions inside
+    /// map linearly instead of snapping to the segment's boundaries.
+    pub(crate) linear: bool,
 }
 
 pub(crate) struct NfcOut {
@@ -46,7 +49,7 @@ fn u32_of(n: usize) -> u32 {
 
 pub(crate) fn nfc_with_map(orig: &str) -> NfcOut {
     let mut text = String::with_capacity(orig.len());
-    let mut segs = Vec::with_capacity(orig.len());
+    let mut segs = Vec::new();
     let mut chunk_start = 0usize;
     let flush = |start: usize, end: usize, text: &mut String, segs: &mut Vec<Seg>| {
         if start == end {
@@ -58,21 +61,21 @@ pub(crate) fn nfc_with_map(orig: &str) -> NfcOut {
             _ => Some(chunk.nfc().collect::<String>()).filter(|n| n != chunk),
         };
         if changed.is_none() {
-            // Already NFC: map char by char for the finest offsets.
-            for (i, ch) in chunk.char_indices() {
-                segs.push(Seg {
-                    out_start: u32_of(text.len()),
-                    src_start: u32_of(start + i),
-                    src_end: u32_of(start + i + ch.len_utf8()),
-                });
-                text.push(ch);
-            }
+            // Already NFC: one verbatim run — interior positions map byte-for-byte.
+            segs.push(Seg {
+                out_start: u32_of(text.len()),
+                src_start: u32_of(start),
+                src_end: u32_of(end),
+                linear: true,
+            });
+            text.push_str(chunk);
         } else {
             // NFC changed this combining sequence: map it as one unit.
             segs.push(Seg {
                 out_start: u32_of(text.len()),
                 src_start: u32_of(start),
                 src_end: u32_of(end),
+                linear: false,
             });
             text.push_str(changed.as_deref().unwrap_or(chunk));
         }
@@ -96,22 +99,49 @@ pub(crate) fn seg_index(segs: &[Seg], out_pos: u32) -> usize {
 
 /// `(src_start, src_end)` covering `out[start..end)`. Empty ranges map to an empty source range.
 pub(crate) fn map_range(segs: &[Seg], start: u32, end: u32, src_len: u32) -> (u32, u32) {
+    map_range_verbatim(segs, start, end, src_len).0
+}
+
+/// Like [`map_range`], also reporting whether every covering segment is verbatim — when true,
+/// the mapped source range is byte-identical to the output range (used when composing maps).
+pub(crate) fn map_range_verbatim(
+    segs: &[Seg],
+    start: u32,
+    end: u32,
+    src_len: u32,
+) -> ((u32, u32), bool) {
     if segs.is_empty() {
-        return (0, 0);
+        return ((0, 0), true);
     }
     if start >= end {
         let i = seg_index(segs, start);
         let s = segs[i];
-        let p = if start > s.out_start {
+        let p = if s.linear {
+            s.src_start
+                .saturating_add(start.saturating_sub(s.out_start))
+        } else if start > s.out_start {
             s.src_end
         } else {
             s.src_start
         };
-        return (p.min(src_len), p.min(src_len));
+        return ((p.min(src_len), p.min(src_len)), s.linear);
     }
-    let a = segs[seg_index(segs, start)].src_start;
-    let b = segs[seg_index(segs, end - 1)].src_end;
-    (a, b)
+    let ia = seg_index(segs, start);
+    let ib = seg_index(segs, end - 1);
+    let sa = segs[ia];
+    let sb = segs[ib];
+    let a = if sa.linear {
+        sa.src_start.saturating_add(start - sa.out_start)
+    } else {
+        sa.src_start
+    };
+    let b = if sb.linear {
+        sb.src_start.saturating_add(end - sb.out_start)
+    } else {
+        sb.src_end
+    };
+    let verbatim = segs[ia..=ib].iter().all(|s| s.linear);
+    ((a, b), verbatim)
 }
 
 #[cfg(test)]
