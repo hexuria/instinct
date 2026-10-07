@@ -80,6 +80,7 @@ pub const MIN_GERUND_CHARS: usize = 5;
 
 /// Why scoring was refused.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ScoreError {
     /// The text was canonicalized with a different config than the rule literals.
     ConfigMismatch {

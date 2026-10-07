@@ -122,6 +122,7 @@ pub struct LexiconSpec {
 
 /// Why a [`LexiconSpec`] was refused. Indices point into `LexiconSpec::entries`.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum LexiconError {
     /// No entries at all.
     NoEntries,
@@ -233,6 +234,7 @@ impl std::error::Error for LexiconError {}
 
 /// Why a lookup was refused.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum LookupError {
     /// The text was canonicalized with a different config than the lexicon's terms, so the
     /// comparison would be meaningless.
