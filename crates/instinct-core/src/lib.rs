@@ -72,7 +72,7 @@ mod span;
 mod trail;
 mod version;
 
-pub use answer::{AbstainReason, Answer, Ranked};
+pub use answer::{AbstainReason, Answer, Ranked, RankedError};
 pub use candidate::{CandidateError, CandidateId, CandidateSet, MAX_ID_BYTES};
 pub use decide::{Scores, ScoresError, abstain, decide};
 pub use decision::Decision;

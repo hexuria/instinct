@@ -243,7 +243,7 @@ fn over_long_input_is_refused_not_truncated() {
     assert!(matches!(
         d.answer(),
         Answer::Abstain {
-            why: AbstainReason::NoCandidates,
+            why: AbstainReason::InputTooLong,
             ..
         }
     ));

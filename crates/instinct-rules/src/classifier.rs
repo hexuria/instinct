@@ -166,6 +166,10 @@ impl RuleClassifier {
     }
 
     /// Decides `text`. Pure: same text + same profile gives a byte-identical [`Decision`].
+    ///
+    /// # Panics
+    /// Panics only if the class-scores/options invariant is broken (rule classes in declared
+    /// order are the question's options); that is a construction bug, not an input error.
     pub fn decide(&self, text: &str, profile: Profile) -> Decision {
         let mut trail = Trail::new();
         let Ok(normalized) = normalize(text, self.config) else {
@@ -174,7 +178,7 @@ impl RuleClassifier {
                 StageKind::Normalize,
                 "input refused (too long)",
             ));
-            return self.refuse(AbstainReason::NoCandidates, profile, trail);
+            return self.refuse(AbstainReason::InputTooLong, profile, trail);
         };
         trail.push(
             TrailRecord::new(
@@ -195,7 +199,7 @@ impl RuleClassifier {
 
         let Ok(lookup) = self.lexicon.lookup(&normalized) else {
             trail.push(TrailRecord::new(StageKind::Lexicon, "config mismatch"));
-            return self.refuse(AbstainReason::NoCandidates, profile, trail);
+            return self.refuse(AbstainReason::ConfigMismatch, profile, trail);
         };
         for h in lookup.hits() {
             let term = self.lexicon.term(h.entry());
@@ -241,7 +245,7 @@ impl RuleClassifier {
         let repairs = Repairs::from_lookup(&self.lexicon, &lookup);
         let Ok(scores) = self.rules.score(&normalized, &repairs) else {
             trail.push(TrailRecord::new(StageKind::Rules, "config mismatch"));
-            return self.refuse(AbstainReason::NoCandidates, profile, trail);
+            return self.refuse(AbstainReason::ConfigMismatch, profile, trail);
         };
         for rec in self.rules.trail(&scores) {
             trail.push(rec);
@@ -249,7 +253,14 @@ impl RuleClassifier {
 
         let mut option_scores = Scores::new(&self.question);
         for (i, c) in scores.scores().iter().enumerate() {
-            let _ = option_scores.set(OptionIndex::new(u16::try_from(i).unwrap_or(u16::MAX)), *c);
+            // Invariant: the rule classes in declared order are the question's options, so
+            // every class score maps 1:1 to an option and `set` cannot fail.
+            assert!(
+                option_scores
+                    .set(OptionIndex::new(u16::try_from(i).unwrap_or(u16::MAX)), *c)
+                    .is_ok(),
+                "class scores must align with the question's options"
+            );
         }
         let answer = decide(&option_scores, profile);
         trail.push(TrailRecord::new(
