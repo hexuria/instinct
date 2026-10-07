@@ -134,10 +134,9 @@ impl TryFrom<Vec<(OptionIndex, Confidence)>> for Ranked {
         if let Some(w) = idx.windows(2).find(|w| w[0] == w[1]) {
             return Err(RankedError::DuplicateIndex { index: w[0] });
         }
-        if !v
-            .windows(2)
-            .all(|w| (w[0].1 > w[1].1) || (w[0].1 == w[1].1 && w[0].0 < w[1].0))
-        {
+        let mut canon = v.clone();
+        canon.sort_unstable_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        if canon != v {
             return Err(RankedError::Unsorted);
         }
         Ok(Self(v.into_boxed_slice()))
