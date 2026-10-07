@@ -98,10 +98,12 @@ fn mul(c: Cost, n: usize) -> Cost {
     )
 }
 
-/// All strings obtained from `s` by deleting at most `max` chars (including `s` itself), sorted
-/// and deduplicated. `s.len()` is bounded by the caller.
-pub(crate) fn deletes(s: &[char], max: usize) -> Vec<String> {
-    let mut out = vec![s.iter().collect::<String>()];
+/// All char sequences obtained from `s` by deleting at most `max` chars (including `s`
+/// itself), sorted and deduplicated. `s.len()` is bounded by the caller. Char vectors keep
+/// generation allocation-light — callers collect to `String` only where an actual string key
+/// is needed.
+pub(crate) fn deletes(s: &[char], max: usize) -> Vec<Vec<char>> {
+    let mut out = vec![s.to_vec()];
     let mut frontier = vec![s.to_vec()];
     for _ in 0..max {
         let mut next = Vec::new();
@@ -114,7 +116,7 @@ pub(crate) fn deletes(s: &[char], max: usize) -> Vec<String> {
         }
         next.sort_unstable();
         next.dedup();
-        out.extend(next.iter().map(|v| v.iter().collect::<String>()));
+        out.extend(next.iter().cloned());
         frontier = next;
     }
     out.sort_unstable();
@@ -162,10 +164,14 @@ mod tests {
         assert_eq!(cost(&c(""), &c(""), 0), Some(ZERO));
     }
 
+    fn ss(v: Vec<Vec<char>>) -> Vec<String> {
+        v.into_iter().map(|w| w.into_iter().collect()).collect()
+    }
+
     #[test]
     fn deletes_enumerates_and_dedups() {
-        assert_eq!(deletes(&c("ab"), 1), ["a", "ab", "b"]);
-        assert_eq!(deletes(&c("aa"), 2), ["", "a", "aa"]);
-        assert_eq!(deletes(&c("abc"), 0), ["abc"]);
+        assert_eq!(ss(deletes(&c("ab"), 1)), ["a", "ab", "b"]);
+        assert_eq!(ss(deletes(&c("aa"), 2)), ["", "a", "aa"]);
+        assert_eq!(ss(deletes(&c("abc"), 0)), ["abc"]);
     }
 }

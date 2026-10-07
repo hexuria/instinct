@@ -505,7 +505,10 @@ impl Lexicon {
             if e.tokens == 1 && matches!(spec.repair, Repair::Typos { .. }) {
                 longest_single = longest_single.max(e.chars.len());
                 for d in repair::deletes(&e.chars, usize::from(max_edits(e.chars.len()))) {
-                    deletes.entry(d.into_boxed_str()).or_default().push(id(i));
+                    deletes
+                        .entry(d.into_iter().collect::<String>().into_boxed_str())
+                        .or_default()
+                        .push(id(i));
                 }
             }
         }
@@ -593,6 +596,9 @@ impl Lexicon {
         }
         let toks = text.tokens();
         let mut out = Lookup::default();
+        // One scratch buffer for the exact-match key and the delete probes — lookup is called
+        // once per token, so per-token Strings would be pure churn.
+        let mut scratch = String::new();
         let mut i = 0;
         while i < toks.len() {
             let t = &toks[i];
@@ -612,7 +618,7 @@ impl Lexicon {
                 i += 1;
                 continue;
             }
-            if let Some((entry, n)) = self.longest_exact(text, toks, i) {
+            if let Some((entry, n)) = self.longest_exact(text, toks, i, &mut scratch) {
                 out.hits.push(make_hit(toks, i, n, entry, MatchKind::Exact));
                 i += n;
                 continue;
@@ -621,7 +627,7 @@ impl Lexicon {
             if let Some(entry) = self.substring_hit(word) {
                 out.hits
                     .push(make_hit(toks, i, 1, entry, MatchKind::Substring));
-            } else if let Some((entry, kind)) = self.repair_hit(word) {
+            } else if let Some((entry, kind)) = self.repair_hit(word, &mut scratch) {
                 out.hits.push(make_hit(toks, i, 1, entry, kind));
             }
             i += 1;
@@ -634,9 +640,10 @@ impl Lexicon {
         text: &Normalized<'_>,
         toks: &[Token],
         i: usize,
+        key: &mut String,
     ) -> Option<(EntryId, usize)> {
         let sentence = toks[i].sentence();
-        let mut key = String::new();
+        key.clear();
         let mut best = None;
         for (n, t) in toks[i..].iter().take(self.max_tokens).enumerate() {
             if !t.is_free() || t.confusable().is_some() || t.sentence() != sentence {
@@ -668,7 +675,7 @@ impl Lexicon {
         best
     }
 
-    fn repair_hit(&self, word: &str) -> Option<(EntryId, MatchKind)> {
+    fn repair_hit(&self, word: &str, scratch: &mut String) -> Option<(EntryId, MatchKind)> {
         let Repair::Typos { penalty_per_edit } = self.repair else {
             return None;
         };
@@ -683,7 +690,9 @@ impl Lexicon {
         }
         let mut candidates = BTreeSet::new();
         for d in repair::deletes(&q, 2) {
-            if let Some(ids) = self.deletes.get(d.as_str()) {
+            scratch.clear();
+            scratch.extend(d.iter());
+            if let Some(ids) = self.deletes.get(scratch.as_str()) {
                 candidates.extend(ids.iter().copied());
             }
         }
