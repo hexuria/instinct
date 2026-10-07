@@ -73,6 +73,7 @@ const fn default_window() -> u8 {
 
 /// Why a [`RuleSetSpec`] was refused.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum RulesError {
     /// No classes declared.
     NoClasses,

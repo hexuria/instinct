@@ -9,6 +9,7 @@ use crate::hv::{Dim, Hv};
 
 /// Why a codebook was refused.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum CodebookError {
     /// No entries.
     Empty,

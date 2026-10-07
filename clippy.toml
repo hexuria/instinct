@@ -13,4 +13,17 @@ disallowed-methods = [
     { path = "std::env::var", reason = "no environment reads in Instinct(spec §5 rule 3)" },
     { path = "std::env::var_os", reason = "no environment reads in Instinct(spec §5 rule 3)" },
     { path = "std::env::vars", reason = "no environment reads in Instinct(spec §5 rule 3)" },
+    { path = "std::env::args", reason = "no environment reads in Instinct(spec §5 rule 3)" },
+    { path = "std::env::args_os", reason = "no environment reads in Instinct(spec §5 rule 3)" },
+    { path = "std::env::current_dir", reason = "no environment reads in Instinct(spec §5 rule 3)" },
+    { path = "std::env::temp_dir", reason = "no environment reads in Instinct(spec §5 rule 3)" },
+    { path = "std::env::home_dir", reason = "no environment reads in Instinct(spec §5 rule 3)" },
+    { path = "std::env::current_exe", reason = "no environment reads in Instinct(spec §5 rule 3)" },
+    { path = "std::process::exit", reason = "no process exits in Instinct(spec §5 rule 3)" },
+]
+# Thread-locals are banned by spec §5 rule 3 as well; clippy 1.99 supports disallowed-macros.
+# Residual gap: a local `macro_rules!` wrapper around `thread_local!` is not caught — the
+# `std::thread_local` invocation itself still is.
+disallowed-macros = [
+    { path = "std::thread_local", reason = "no thread-locals in Instinct(spec §5 rule 3)" },
 ]

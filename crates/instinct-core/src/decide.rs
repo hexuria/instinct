@@ -378,5 +378,10 @@ mod tests {
             AbstainReason::Confusable.to_string(),
             "confusable token matched a guarded term"
         );
+        assert_eq!(
+            AbstainReason::InputTooLong.to_string(),
+            "input refused (too long)"
+        );
+        assert_eq!(AbstainReason::ConfigMismatch.to_string(), "config mismatch");
     }
 }

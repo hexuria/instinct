@@ -93,6 +93,7 @@ impl Edge {
 
 /// Why a graph operation was refused.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum GraphError {
     /// A node id from another graph, or past the end.
     UnknownNode {

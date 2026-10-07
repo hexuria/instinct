@@ -4,7 +4,10 @@
     unused_qualifications,
     clippy::unwrap_used,
     clippy::expect_used,
-    clippy::print_stdout
+    clippy::print_stdout,
+    // The gungraun `main!` harness reads argv and calls exit itself; the spec §5 rule 3
+    // ban targets library code, not the bench runner.
+    clippy::disallowed_methods
 )]
 
 use std::hint::black_box;

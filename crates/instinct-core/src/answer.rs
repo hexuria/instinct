@@ -31,6 +31,11 @@ pub enum AbstainReason {
     NotConverged,
     /// A confusable (homoglyph / mixed-script) token matched a guarded term.
     Confusable,
+    /// The input was refused before scoring (e.g. over the size limit); never truncated.
+    InputTooLong,
+    /// A stage refused because the text was canonicalized with a different config than the
+    /// compiled data (lexicon or rules).
+    ConfigMismatch,
 }
 
 impl fmt::Display for AbstainReason {
@@ -41,6 +46,8 @@ impl fmt::Display for AbstainReason {
             Self::NoCandidates => f.write_str("no candidates"),
             Self::NotConverged => f.write_str("not converged"),
             Self::Confusable => f.write_str("confusable token matched a guarded term"),
+            Self::InputTooLong => f.write_str("input refused (too long)"),
+            Self::ConfigMismatch => f.write_str("config mismatch"),
         }
     }
 }
@@ -85,14 +92,54 @@ fn is_canonical(v: &[(OptionIndex, Confidence)]) -> bool {
     sorted && idx.windows(2).all(|w| w[0] != w[1])
 }
 
-impl TryFrom<Vec<(OptionIndex, Confidence)>> for Ranked {
-    type Error = &'static str;
-    fn try_from(v: Vec<(OptionIndex, Confidence)>) -> Result<Self, Self::Error> {
-        if is_canonical(&v) {
-            Ok(Self(v.into_boxed_slice()))
-        } else {
-            Err("ranked list must be sorted by confidence desc, index asc, with unique indices")
+/// Why a [`Ranked`] list was refused (deserialization boundary).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum RankedError {
+    /// An empty ranked list: an abstain always carries every option.
+    Empty,
+    /// Entries are not ordered by confidence descending, then index ascending.
+    Unsorted,
+    /// An option index appears twice.
+    DuplicateIndex {
+        /// The repeated index.
+        index: OptionIndex,
+    },
+}
+
+impl fmt::Display for RankedError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Empty => f.write_str("ranked list is empty"),
+            Self::Unsorted => {
+                f.write_str("ranked list must be sorted by confidence desc, then index asc")
+            }
+            Self::DuplicateIndex { index } => {
+                write!(f, "ranked list repeats option index {index}")
+            }
         }
+    }
+}
+
+impl std::error::Error for RankedError {}
+
+impl TryFrom<Vec<(OptionIndex, Confidence)>> for Ranked {
+    type Error = RankedError;
+    fn try_from(v: Vec<(OptionIndex, Confidence)>) -> Result<Self, Self::Error> {
+        if v.is_empty() {
+            return Err(RankedError::Empty);
+        }
+        let mut idx: Vec<OptionIndex> = v.iter().map(|e| e.0).collect();
+        idx.sort_unstable();
+        if let Some(w) = idx.windows(2).find(|w| w[0] == w[1]) {
+            return Err(RankedError::DuplicateIndex { index: w[0] });
+        }
+        let mut canon = v.clone();
+        canon.sort_unstable_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        if canon != v {
+            return Err(RankedError::Unsorted);
+        }
+        Ok(Self(v.into_boxed_slice()))
     }
 }
 
@@ -170,25 +217,34 @@ mod tests {
 
     #[test]
     fn ranked_try_from_rejects_non_canonical_orders() {
-        let err = "ranked list must be sorted by confidence desc, index asc, with unique indices";
         // A duplicated index is not canonical even when the confidences sort.
         assert_eq!(
             Ranked::try_from(vec![(i(0), c(500)), (i(0), c(400))]),
-            Err(err)
+            Err(RankedError::DuplicateIndex { index: i(0) })
         );
         // Equal confidences must rank the lower index first.
         assert_eq!(
             Ranked::try_from(vec![(i(1), c(500)), (i(0), c(500))]),
-            Err(err)
+            Err(RankedError::Unsorted)
         );
         // Ascending confidence is not canonical.
         assert_eq!(
             Ranked::try_from(vec![(i(0), c(400)), (i(1), c(500))]),
-            Err(err)
+            Err(RankedError::Unsorted)
         );
-        // The same pairs in canonical order pass; an empty list is canonical.
+        // An empty ranked list is refused: an abstain always carries every option.
+        assert_eq!(Ranked::try_from(vec![]), Err(RankedError::Empty));
+        // The same pairs in canonical order pass.
         assert!(Ranked::try_from(vec![(i(0), c(500)), (i(1), c(400))]).is_ok());
         assert!(Ranked::try_from(vec![(i(0), c(500)), (i(1), c(500))]).is_ok());
-        assert!(Ranked::try_from(vec![]).is_ok());
+        assert_eq!(RankedError::Empty.to_string(), "ranked list is empty");
+        assert_eq!(
+            RankedError::Unsorted.to_string(),
+            "ranked list must be sorted by confidence desc, then index asc"
+        );
+        assert_eq!(
+            RankedError::DuplicateIndex { index: i(2) }.to_string(),
+            "ranked list repeats option index #2"
+        );
     }
 }
