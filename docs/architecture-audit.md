@@ -475,7 +475,7 @@ Every handoff target accepted a PR, so nothing was parked on an `archive/packs-*
 |---|---|---|
 | §10 step 3 + 5 | [#21](https://github.com/hexuria/instinct/pull/21) (merged `6aef318`) | `instinct-rules::RuleClassifier` (`ClassifierSpec`, `OnConfusable`) is the shared pipeline. The `delivery` fixture and its golden journal in `crates/instinct-rules/tests/fixtures/delivery/` replay byte-identical to the old `instinct-steer` journal. |
 | §10 steps 1, 2, 4 + B6 | [#22](https://github.com/hexuria/instinct/pull/22) (merged `e1635f1`) | `instinct-core`: `CandidateSet`, one private gate in `decide`, `abstain()` so every abstain carries all options ranked, neutral confusable text. Removed `rank_candidates`, `RankedCandidates`, `CandidatePick`, `HdcMode`, `Thresholds::hdc` and the `Pack` trait. Added `instinct-lexicon::overlap` and `instinct-graph::label_of`. Toolbox fix: `chosen_id` is `None` on abstain. `DataVersion` changed on every golden row, because the profile table lost its HDC column. |
-| B8 handoffs | nativechat#194, open-ai-gateway#149, buwiz-forms#67, opengrok-server#370 (drafts) | Consumer-owned crates depend on Instinct by git rev `e1635f1`. See the migration table below. |
+| B8 handoffs | nativechat#194 (**closed** — rehome steer to opengrok-server), open-ai-gateway#149, buwiz-forms#67, opengrok-server#370 (drafts) | Consumer-owned crates depend on Instinct by git rev `e1635f1`. See the migration table below. |
 | B1–B5, B7 + §10 step 6 | [#23](https://github.com/hexuria/instinct/pull/23) (merged `e968440`) | Removed `packs/` (all five) and `crates/instinct-jev`. Removed `instinct_lexicon::ocr`, the `jev_reply_parse` fuzz target, `docs/eval/autosteer.md` and the autosteer goldens. Cleaned the workspace members, CODEOWNERS, `scripts/architecture.txt`, `scripts/mutants.sh` and repo rules. The `autosteer_ask` bench became `classifier_decide`, and `gateway_shape_mixed` was dropped. Engine docs now use consumer-neutral wording. README and spec were rewritten around "Instinct owns *how*". Added ADR 0010. |
 
 ### Crates
@@ -490,7 +490,7 @@ Every handoff target accepted a PR, so nothing was parked on an `archive/packs-*
 
 | From | To | PR | Verified |
 |---|---|---|---|
-| `instinct-steer` | hexuria/nativechat `crates/autosteer` (`nativechat-autosteer`; `PackError` → `AutosteerError`; `target-selection` dropped) | [#194](https://github.com/hexuria/nativechat/pull/194) | 16 unit, 2 eval/golden, 3 proptests and 1 doctest pass. The golden replays byte-identical and `EVAL.md` regenerates with the same body. clippy, fmt and `cargo deny` pass. |
+| `instinct-steer` | **Rehome:** opengrok-server server ingress (not NativeChat). [nativechat#194](https://github.com/hexuria/nativechat/pull/194) landed a draft `crates/autosteer` then was **closed** on 2026-10-05: client-side advice dies when the app closes and is easy to bypass by sending. Authoritative classify→apply stays on the backend. | [#194](https://github.com/hexuria/nativechat/pull/194) (closed) | Crate tests passed on the closed branch (16 unit, 2 eval/golden, 3 proptests, 1 doctest). No consumer wire. Server rehome not started (owner: docs-only for now). |
 | `instinct-gateway` | hexuria/open-ai-gateway `crates/oag-shape` (depends only on `instinct-text`; tag `oag-shape/1`) | [#149](https://github.com/hexuria/open-ai-gateway/pull/149) | 6 unit, 3 proptests and 1 doctest pass. clippy, fmt and deny pass. |
 | `instinct-bir` + `instinct_lexicon::ocr` | hexuria/buwiz-forms `crates/bir-suggest` (`ocr_digits.rs`) | [#67](https://github.com/hexuria/buwiz-forms/pull/67) | The full test suite, clippy and fmt pass. Its CI runs `--workspace`, so it covers the new crates. |
 | `instinct-ocr` | hexuria/buwiz-forms `crates/bir-cor-extract` | [#67](https://github.com/hexuria/buwiz-forms/pull/67) | Same as the row above. |
@@ -504,7 +504,7 @@ Every handoff target accepted a PR, so nothing was parked on an `archive/packs-*
 - **`opengrok-jev` is a standalone workspace.** opengrok-server pins Rust 1.95 in its toolchain file
   and in `ci.yml`, but Instinct's `rust-version` is 1.99. The crate therefore carries its own `[workspace]`
   and a 1.99.0 `rust-toolchain.toml`, and the root `Cargo.toml` excludes it.
-- **The fixture keeps domain tag `pua-steer/1`.** This lets the engine journal and NativeChat's
+- **The fixture keeps domain tag `pua-steer/1`.** This lets the engine journal and any consumer
   journal stay byte-identical at the same Instinct rev. The tag is fixture data, not a crate name.
 - **Handoffs pin a git rev, not a tag.** No Instinct tag has been cut yet.
 - **ADRs 0008 and 0009 stay in Instinct** for history. Their status lines say "moved with the code", and
@@ -531,14 +531,15 @@ because the pack tests now run in the consumer repos.
 2. **No Instinct tag yet.** #23 is on `main` (`e968440`); cut `v0.1.0` from it, then move the consumer pins from
    `rev = "e1635f1"` to the tag. The engine API changed between the pinned rev and #23 (`ocr`
    is gone), but no consumer imports the removed module.
-3. **The handoff PRs are drafts awaiting the owners.** Each one adds a crate but does not yet wire
-   it into the app (NativeChat `OnSend::Auto`, the gateway request path, the buwiz COR flow, the
-   opengrok `JevDoor`).
-4. **NativeChat CI does not test the new crate.** CI tests only `-p nativechat`, and adding
-   `nativechat-autosteer` needs a workflow edit from the Mac. The lockfile also bumps
-   `serde_spanned` and `unicode-segmentation`.
-5. **opengrok-server toolchain.** Bumping it to 1.99 would let `opengrok-jev` join the root
-   workspace.
+3. **Steer pack must rehome to opengrok-server.** nativechat#194 is closed. Put the authoritative
+   queue/steer/interrupt classify→apply gate on **server ingress**. Optional NativeChat UX chips
+   may come later; they are not the gate. Owner chose docs-only for now (no 1.99 bump / no land yet).
+4. **Other handoff PRs are still drafts.** open-ai-gateway#149, buwiz-forms#67, and
+   opengrok-server#370 add crates but do not yet wire the gateway request path, the buwiz COR
+   flow, or the opengrok `JevDoor`.
+5. **opengrok-server toolchain.** Still on Rust 1.95; Instinct needs 1.99. A bump (ci.yml from the Mac)
+   would let `opengrok-jev` and a future steer crate join the root workspace; otherwise use a
+   standalone 1.99 workspace like #370.
 6. **buwiz-forms overlap.** The existing `cor_ocr` already has its own longest-exact matching and a
    `FormRecord`. Dedupe it with `bir-cor-extract` when the flow is wired.
 7. **HDC is unwired** (owner decision). `instinct-hdc` and `resonator` stay as documented capabilities
