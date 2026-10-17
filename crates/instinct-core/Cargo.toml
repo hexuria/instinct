@@ -1,12 +1,15 @@
 [package]
 name = "instinct-core"
 description = "Instinct: core types (Question/Answer shapes, Millis, Confidence, Span, DataVersion, profiles, decide, candidate sets, trail)."
-version.workspace = true
+version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
-publish.workspace = true
+publish = true
+readme = "README.md"
+keywords = ["decision-engine", "deterministic", "abstain", "arbitration", "scoring"]
+categories = ["algorithms"]
 
 [features]
 default = []

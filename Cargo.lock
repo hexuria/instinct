@@ -223,7 +223,7 @@ dependencies = [
 
 [[package]]
 name = "instinct-core"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "blake3",
  "proptest",
@@ -261,7 +261,7 @@ dependencies = [
 
 [[package]]
 name = "instinct-lexicon"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "instinct-core",
  "instinct-text",
@@ -288,7 +288,7 @@ dependencies = [
 
 [[package]]
 name = "instinct-text"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "instinct-core",
  "proptest",

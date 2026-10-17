@@ -6,6 +6,15 @@ to public types bumps MAJOR (MINOR while 0.x).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-17
+
+First crates.io release: `instinct-core`, `instinct-text` and
+`instinct-lexicon` are published at 0.1.0; the other workspace crates
+stay unpublished. Decisions from this release carry a different
+`DataVersion` than git-rev builds of the same tree — the crate version is
+hashed into `DataVersion` (ADR 0012). Everything listed below ships in
+0.1.0.
+
 ### Changed
 - Renamed PUA → Instinct: crates `pua-*` → `instinct-*`, repo hexuria/pua → hexuria/instinct. Hash/wire domain tags (`pua-data-version-v1`, `pua-hv1`, …) are frozen and unchanged, so DataVersions and golden journals are byte-identical.
 

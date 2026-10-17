@@ -213,7 +213,7 @@ mod tests {
         // toolchain's Unicode version fails here instead of leaking downstream.
         assert_eq!(
             v.to_string(),
-            "17cde40ee06410c6767d1c93fc88ea356ef90a6aeaaa2a1d5befca72fdf8ef3b"
+            "b6230f7e855a66dc2c90464cf7902b99a381ebe1dff99172ea1e0f40aa055eaf"
         );
     }
 }
