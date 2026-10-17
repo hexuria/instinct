@@ -1,12 +1,15 @@
 [package]
 name = "instinct-text"
 description = "Instinct: canonicalization with an offset map: NFC, Ñ-preserving folds, protected spans, tokens, sentences, confusables."
-version.workspace = true
+version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
-publish.workspace = true
+publish = true
+readme = "README.md"
+keywords = ["unicode", "canonicalization", "tokenization", "normalization", "text"]
+categories = ["text-processing"]
 
 [dependencies]
 instinct-core.workspace = true

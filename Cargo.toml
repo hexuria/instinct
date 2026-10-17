@@ -22,10 +22,11 @@ repository = "https://github.com/hexuria/instinct"
 publish = false
 
 [workspace.dependencies]
-# Internal crates.
-instinct-core = { path = "crates/instinct-core" }
-instinct-text = { path = "crates/instinct-text" }
-instinct-lexicon = { path = "crates/instinct-lexicon" }
+# Internal crates. The three published crates carry a version so path deps
+# resolve on crates.io; the unpublished ones stay path-only.
+instinct-core = { path = "crates/instinct-core", version = "0.1.0" }
+instinct-text = { path = "crates/instinct-text", version = "0.1.0" }
+instinct-lexicon = { path = "crates/instinct-lexicon", version = "0.1.0" }
 instinct-rules = { path = "crates/instinct-rules" }
 instinct-hdc = { path = "crates/instinct-hdc" }
 instinct-graph = { path = "crates/instinct-graph" }

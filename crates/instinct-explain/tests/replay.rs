@@ -52,6 +52,21 @@ fn input() -> Input {
 }
 
 #[test]
+#[ignore = "writer: run explicitly to regenerate the golden line"]
+fn write_golden_line() {
+    let i = input();
+    let line = ReplayRecord::new(i.clone(), toy_pack(&i, "toy-v1"))
+        .unwrap()
+        .to_json_line()
+        .unwrap();
+    std::fs::write(
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/replay_v1.jsonl"),
+        format!("{line}\n"),
+    )
+    .unwrap();
+}
+
+#[test]
 fn golden_line_is_byte_stable() {
     let i = input();
     let line = ReplayRecord::new(i.clone(), toy_pack(&i, "toy-v1"))

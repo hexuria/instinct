@@ -75,6 +75,21 @@ For choosing among a finite set of ids (tools, records, routes), use `instinct_c
 `instinct_lexicon::overlap` (or your own integer evidence). `CandidateSet::chosen` is `None` on abstain,
 so an abstain can never be acted on by mistake.
 
+## Install
+
+The three published crates are on crates.io:
+
+```toml
+[dependencies]
+instinct-core = "0.1"    # decide gate, CandidateSet, profiles, DataVersion
+instinct-text = "0.1"    # canonicalization helpers (optional)
+instinct-lexicon = "0.1" # closed-vocabulary matching + overlap (optional)
+```
+
+The other workspace crates (`instinct-rules`, `instinct-hdc`,
+`instinct-graph`, `instinct-explain`) are not published yet — use them by
+git rev, as below.
+
 ## Consumers
 
 No consumer depends on Instinct in production yet. Handoff PRs (drafts) carry the domain code that used
@@ -87,11 +102,16 @@ to live here:
 | buwiz-forms | BIR field suggestions, COR label extraction, OCR digit table | hexuria/buwiz-forms#67 |
 | opengrok-server | Jev wire adapter, the float boundary (`opengrok-jev`) | hexuria/opengrok-server#370 |
 
-Consumers pin Instinct by **git tag or rev**, never a branch (no tag exists yet):
+Consumers pin unpublished crates by **git tag or rev**, never a branch:
 
 ```toml
 instinct-rules = { git = "https://github.com/hexuria/instinct", rev = "<full sha>", features = ["serde"] }
 ```
+
+Published crates resolve by version (`instinct-core = "0.1"`, …). Note:
+decisions built on a crates.io release carry a **different** `DataVersion`
+than a git-rev build of the same tree — the crate version is hashed
+(ADR 0012).
 
 No Instinct crate depends on a consumer crate, or on tokio, axum, sqlx, reqwest, hyper or typesafe-sdk
 (`scripts/architecture.txt`, checked in CI).
@@ -129,7 +149,7 @@ docs/     spec.md · adr/ · architecture-audit.md · progress.md
 ```
 
 - The code is implemented and tested.
-- Nothing is tagged or released yet. The first tag follows the consumer handoffs.
+- `instinct-core`, `instinct-text` and `instinct-lexicon` are published at 0.1.0; the other crates stay unpublished.
 - Rust **1.99.0** is pinned in `rust-toolchain.toml`.
 - Edition 2024, `unsafe_code` forbidden.
 - See [`docs/spec.md`](docs/spec.md) for the contract and [`docs/progress.md`](docs/progress.md) for
