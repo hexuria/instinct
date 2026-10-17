@@ -60,7 +60,10 @@ fn write_golden_line() {
         .to_json_line()
         .unwrap();
     std::fs::write(
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/replay_v1.jsonl"),
+        concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/fixtures/replay_v1.jsonl"
+        ),
         format!("{line}\n"),
     )
     .unwrap();
